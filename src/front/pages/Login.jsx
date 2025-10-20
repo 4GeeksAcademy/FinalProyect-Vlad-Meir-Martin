@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './Login.css'; 
+import '../styles/Login.css'; 
 
 
 function Login() {
@@ -9,7 +9,7 @@ function Login() {
     const [message, setMessage] = useState('');
 
     
-    const handleLogin = (event) => {
+    const handleLogin = async (event) => {
         event.preventDefault(); 
         setMessage('');
 
@@ -109,8 +109,7 @@ function Login() {
             {message.text && (
                 <div 
                     className="message" 
-                    style={{ color: message.type === 'error' ? 'red' : (message.type === 'info' ? 'blue' : 'green') }}
-                >
+                    style={{ color: message.type === 'error' ? 'red' : (message.type === 'info' ? 'blue' : 'green') }}>
                     {message.text}
                 </div>
             )}

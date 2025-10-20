@@ -1,8 +1,13 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import String, Boolean, Integer, ForeignKey, Date, create_engine
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+import uuid
 
 db = SQLAlchemy()
+
+
+def genere_id():
+    return str(uuid.uuid4())
 
 
 class User(db.Model):
@@ -15,7 +20,7 @@ class User(db.Model):
 
     def serialize(self):
         return {
-            "id": self.id,
+            "id": genere_id(),
             "email": self.email,
             "is_active": self.is_active,
         }
@@ -30,15 +35,16 @@ class Patient(db.Model):
     last_name: Mapped[str] = mapped_column(String(255), nullable=False)
     birth_date: Mapped[Date] = mapped_column(Date)
     password: Mapped[str] = mapped_column(String)
-    assign_doctor: Mapped[int] = mapped_column(ForeignKey("doctors.id"), nullable=True)
+    assign_doctor: Mapped[int] = mapped_column(
+        ForeignKey("doctors.id"), nullable=True)
     is_active: Mapped[Boolean] = mapped_column(Boolean)
 
     appointments: Mapped["Appointment"] = relationship(
-     "Appointment", back_populates="patient")
+        "Appointment", back_populates="patient")
 
     def serialize(self):
         return {
-            "id": self.id,
+            "id": genere_id(),
             "email": self.email,
             "first_name": self.first_name,
             "last_name": self.last_name,
@@ -46,6 +52,11 @@ class Patient(db.Model):
             "is_active": self.is_active,
             "assign_doctor": self.assign_doctor
         }
+    
+    @staticmethod
+    def contener_todos():
+        return Patient.query.all()
+
 
 class Doctor(db.Model):
     __tablename__ = "doctors"
@@ -61,11 +72,10 @@ class Doctor(db.Model):
     is_active: Mapped[bool] = mapped_column(Boolean)
     password: Mapped[str] = mapped_column(String(255))
 
-
     center: Mapped["Center"] = relationship("Center", back_populates="doctors")
     appointments: Mapped["Appointment"] = relationship(
         "Appointment", back_populates="doctor")
-    
+
     def serialize(self):
         return {
             "id": self.id,
@@ -77,6 +87,7 @@ class Doctor(db.Model):
             "is_active": self.is_active,
         }
 
+
 class Appointment(db.Model):
     __tablename__ = "appointments"
 
@@ -87,7 +98,6 @@ class Appointment(db.Model):
         "patients.id", ondelete="CASCADE"), nullable=False, index=True)
     center_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("centers.id", ondelete="SET NULL"), index=True)
-    
 
     doctor: Mapped["Doctor"] = relationship(
         "Doctor", back_populates="appointments")
@@ -95,13 +105,15 @@ class Appointment(db.Model):
         "Patient", back_populates="appointments")
     center: Mapped["Center"] = relationship("Center")
 
+
 def serialize(self):
-        return {
-            "id": self.id,
-            "doctor_id": self.doctor_id,
-            "patient_id": self.patient_id,
-            "center_id": self.center_id,
-        }
+    return {
+        "id": self.id,
+        "doctor_id": self.doctor_id,
+        "patient_id": self.patient_id,
+        "center_id": self.center_id,
+    }
+
 
 class Center(db.Model):
     __tablename__ = "centers"

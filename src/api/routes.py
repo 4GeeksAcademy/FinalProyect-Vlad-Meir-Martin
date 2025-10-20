@@ -13,38 +13,39 @@ api = Blueprint('api', __name__)
 # Allow CORS requests to this API
 CORS(api)
 
+
 @api.route('/user', methods=['GET'])
 def get_user():
     data = request.get_json()
-    user = User.query.get()
-    return jsonify ({"id": user.id, "email": user.email}), 200
+    user = User.query.all()
+    return jsonify({"id": user.id, "email": user.email}), 200
 
-@api.route('/patient', methods=['GET'])
+
+@api.route('/patients', methods=['GET'])
 def get_patient():
-    data = request.get_json()
-    patients = Patient.query.get()
-    return jsonify ({"id": patients.id, "email": patients.email}), 200
+    patients = Patient.contener_todos()
+    return jsonify([patient.serialize() for patient in patients]), 200
+
 
 @api.route('/center_register', methods=['POST'])
 def create_center():
     data = request.get_json()
-    id = data.get("id")
     name = data.get("name")
     address = data.get("address")
     zip_code = data.get("zip_code")
     phone = data.get("phone")
     type_center = data.get("type_center")
     new_center = Center(
-                        id=id,
-                        name=name,
-                        address=address,
-                        zip_code=zip_code,
-                        phone=phone,
-                        type_center=type_center
-                        )
+        name=name,
+        address=address,
+        zip_code=zip_code,
+        phone=phone,
+        type_center=type_center
+    )
     db.session.add(new_center)
     db.session.commit()
     return jsonify(new_center.serialize()), 200
+
 
 @api.route('/register', methods=['POST'])
 def register():
@@ -53,7 +54,7 @@ def register():
     first_name = data.get("first_name")
     last_name = data.get("last_name")
     birth_date = data.get("birth_date")
-    
+
     role = data.get("role")
     password = data.get("password")
 
@@ -70,32 +71,32 @@ def register():
         work_days = data.get("work_days")
 
         new_doctor = Doctor(email=email,
-                          first_name=first_name,
-                          last_name=last_name,
-                          specialty=specialty,
-                          center_id=center_id,
-                          password=hashed_password.decode("utf-8"),
-                          work_days=work_days,
-                          is_active=True
-                        )
+                            first_name=first_name,
+                            last_name=last_name,
+                            specialty=specialty,
+                            center_id=center_id,
+                            password=hashed_password.decode("utf-8"),
+                            work_days=work_days,
+                            is_active=True
+                            )
         db.session.add(new_doctor)
         db.session.commit()
         return jsonify(new_doctor.serialize()), 200
-    
+
     elif role == "patient":
         new_patient = Patient(email=email,
-                            first_name=first_name,
-                            last_name=last_name,
-                            birth_date=birth_date,
-                            password=hashed_password.decode("utf-8"),
-                            is_active=True
-                        )
+                              first_name=first_name,
+                              last_name=last_name,
+                              birth_date=birth_date,
+                              password=hashed_password.decode("utf-8"),
+                              is_active=True
+                              )
         db.session.add(new_patient)
         db.session.commit()
         return jsonify(new_patient.serialize()), 200
-    
+
     else:
-        return jsonify({"msg":"El rol no es valido",
+        return jsonify({"msg": "El rol no es valido",
                         "Error": f"El rol no coincide con doctor o paciente: {role}"}), 400
 
 
@@ -107,11 +108,12 @@ def create_token_patient():
 
     user = Patient.query.filter_by(email=username).first()
 
-    if not user or not bcrypt.checkpw(password.encode("utf-8"),user.password.encode("utf-8")):
+    if not user or not bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
         return jsonify({"msg": "Bad username or password"}), 401
-     
+
     access_token = create_access_token(identity=str(user.id))
     return jsonify({"token": access_token, "user_id": user.id})
+
 
 @api.route("/login/doctor", methods=["POST"])
 def create_token_doctor():
@@ -121,12 +123,13 @@ def create_token_doctor():
 
     user = Doctor.query.filter_by(email=username).first()
     print(user.id)
-    
-    if not user or not bcrypt.checkpw(password.encode("utf-8"),user.password.encode("utf-8")):
+
+    if not user or not bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
         return jsonify({"msg": "Bad username or password"}), 401
-     
+
     access_token = create_access_token(identity=str(user.id))
     return jsonify({"token": access_token, "user_id": user.id})
+
 
 @api.route("/protected/patient", methods=["GET"])
 @jwt_required()
@@ -134,7 +137,7 @@ def protected_patient():
     # Access the identity of the current user with get_jwt_identity
     current_user_id = int(get_jwt_identity())
     user = Patient.query.get(current_user_id)
-    return jsonify (user.serialize()), 200
+    return jsonify(user.serialize()), 200
 
 
 @api.route("/protected/doctor", methods=["GET"])
@@ -144,4 +147,4 @@ def protected_doctor():
     current_user_id = int(get_jwt_identity())
     print(current_user_id)
     user = Doctor.query.get(current_user_id)
-    return jsonify (user.serialize()), 200
+    return jsonify(user.serialize()), 200
