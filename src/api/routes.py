@@ -8,11 +8,14 @@ from flask_cors import CORS
 import bcrypt
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from datetime import datetime
+import requests
+
+DEFAULT_NAVARRA_URL = "https://datosabiertos.navarra.es/datastore/dump/f1fc5b52-be72-4088-8cb1-772076e2071c?format=json&bom=True"
 
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
-CORS(api)
+CORS(api, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 @api.route('/user', methods=['GET'])
 def get_user():
@@ -29,6 +32,119 @@ def get_all_patient():
 def get_all_doctors():
     doctors = Doctor.all_doctors()
     return jsonify([doctor.serialize() for doctor in doctors]), 200
+
+@api.route('/centers', methods=['GET'])
+def get_centers():
+    centers = Center.query.all()
+    return jsonify([center.serialize() for center in centers]), 200
+
+@api.route('/centers/seed/navarra', methods=['POST'])
+def seed_navarra_centers():
+    try:
+        url = request.json.get("url") if request.is_json else None
+        url = url or DEFAULT_NAVARRA_URL
+
+        r = requests.get(url, timeout=20)
+        r.raise_for_status()
+        payload = r.json()
+
+        # Según tu muestra, 'records' es una lista de listas:
+        # [id,"Codigo Centro","Nombre Centro","Domicilio","Localidad","Codigo Postal","Telefono","Tipo de Centro","Dependencia"]
+        records = payload["records"]
+
+        created = []
+        for row in records:
+            name        = row[2]
+            address     = row[3]
+            zip_code    = row[5]
+            phone       = row[6]
+            type_center = row[7]
+
+            # evita duplicados por (name,address)
+            existing = Center.query.filter_by(name=name, address=address).first()
+            if existing:
+                continue
+
+            c = Center.create(
+                name=name,
+                address=address,
+                zip_code=zip_code,
+                phone=phone,
+                type_center=type_center
+            )
+            created.append(c.serialize())
+
+        return jsonify({"inserted": len(created), "items": created}), 201
+
+    except Exception as e:
+        return jsonify({"message": f"Error al seedear centros: {str(e)}"}), 500
+
+@api.route('/seed/load-navarra-centers', methods=['POST'])
+def load_navarra_centers():
+    """
+    Este endpoint es llamado por el frontend UNA SOLA VEZ.
+    Se encarga de contactar la API de Navarra, obtener los centros
+    y guardarlos en la base de datos local.
+    """
+    
+    # 1. Comprobar si ya existen centros para no duplicar
+    try:
+        existing_centers = Center.query.first()
+        if existing_centers:
+            # Si ya hay centros, no hacemos nada y avisamos.
+            return jsonify({"message": "Los centros ya estaban cargados. No se hace nada."}), 200
+    except Exception as e:
+        # Error al consultar la BBDD
+        return jsonify({"message": f"Error al verificar la base de datos: {str(e)}"}), 500
+
+    # 2. Si no hay centros, llamar a la API de Navarra
+    URL_NAVARRA_API = "https://datosabiertos.navarra.es/datastore/dump/f1fc5b52-be72-4088-8cb1-772076e2071c?format=json&bom=True"
+    records = []
+    
+    try:
+        # Petición de Servidor a Servidor (aquí NO HAY CORS)
+        response = requests.get(URL_NAVARRA_API)
+        response.raise_for_status() # Lanza un error si la respuesta no es 2xx
+        
+        data = response.json()
+        records = data.get("result", {}).get("records", [])
+        
+        if not records:
+            return jsonify({"message": "No se encontraron datos en la API de Navarra"}), 404
+            
+    except requests.exceptions.RequestException as e:
+        # Error si la API de Navarra está caída o hay un problema de red
+        return jsonify({"message": f"Error al contactar la API de Navarra: {str(e)}"}), 503 # Service Unavailable
+
+    # 3. Formatear y guardar los primeros 5 en la base de datos
+    try:
+        primeros_cinco = records[:5]
+        centers_to_add = []
+        
+        for r in primeros_cinco:
+            # Limpiamos el teléfono (igual que hacías en JS)
+            phone = r.get("Telefono", "")
+            if phone:
+                phone = phone.replace(" ", "")
+
+            # Creamos la instancia del modelo (asegúrate que tu modelo Center coincida)
+            new_center = Center(
+                name = r.get("Nombre Centro"),
+                address = r.get("Domicilio"),
+                zip_code = r.get("Codigo Postal"),
+                phone = phone,
+                type_center = r.get("Tipo de Centro")
+            )
+            centers_to_add.append(new_center)
+        
+        db.session.add_all(centers_to_add) # Añade todos los centros a la sesión
+        db.session.commit() # Guarda los cambios en la BBDD
+        
+        return jsonify({"message": f"Éxito: {len(centers_to_add)} centros de Navarra registrados."}), 201 # 201 = Creado
+
+    except Exception as e:
+        db.session.rollback() # Revierte la transacción en caso de error
+        return jsonify({"message": f"Error al guardar centros en la base de datos: {str(e)}"}), 500
 
 @api.route('/center_register', methods=['POST'])
 def create_center():
@@ -50,32 +166,12 @@ def create_center():
 
 @api.route('/centers/batch', methods=['POST'])
 def create_centers_batch():
-    centers_data = request.get_json() # 'data' es ahora una lista [{}, {}, {}]
-    
+    centers_data = request.get_json(force=True)
     if not isinstance(centers_data, list):
-        return jsonify({"error": "Se esperaba una lista (array) de centros"}), 400
+        return jsonify({"message": "Se esperaba una lista de centros"}), 400
 
-    new_centers_list = []
-    for center_data in centers_data:
-        new_center = Center( # Creamos la instancia sin 'create' para no hacer commit cada vez
-            name=center_data.get("name"),
-            address=center_data.get("address"),
-            zip_code=center_data.get("zip_code"),
-            phone=center_data.get("phone"),
-            type_center=center_data.get("type_center")
-        )
-        db.session.add(new_center)
-        new_centers_list.append(new_center)
-
-    try:
-        db.session.commit() # Hacemos UN SOLO commit para todos los centros
-        # Devolvemos la lista de centros creados
-        serialized_centers = [center.serialize() for center in new_centers_list]
-        return jsonify(serialized_centers), 201
-        
-    except Exception as e:
-        db.session.rollback() # Revertir si algo falla
-        return jsonify({"error": str(e)}), 500
+    created = [Center.create(**c).serialize() for c in centers_data]
+    return jsonify(created), 201
 
 @api.route('/register/doctor', methods=['POST'])
 def register_doctor():

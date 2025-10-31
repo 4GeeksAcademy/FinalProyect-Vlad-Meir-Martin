@@ -17,10 +17,8 @@ export const Home = () => {
         
         // Comprobamos si ya hemos cargado los centros antes
         const hasLoadedCenters = localStorage.getItem('centersLoaded');
-
         // Si NO los hemos cargado, ejecutamos la función
         if (!hasLoadedCenters) {
-            
             // Definimos una función async interna para poder usar 'await'
             const loadInitialData = async () => {
                 console.log("Cargando y registrando centros por primera vez...");
@@ -40,7 +38,6 @@ export const Home = () => {
             };
 
             loadInitialData();
-
         } else {
             console.log("Los centros ya estaban cargados. No se hace nada.");
         }
