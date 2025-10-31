@@ -10,7 +10,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from datetime import datetime
 import requests
 
-DEFAULT_NAVARRA_URL = "https://datosabiertos.navarra.es/datastore/dump/f1fc5b52-be72-4088-8cb1-772076e2071c?format=json&bom=True"
+DEFAULT_NAVARRA_URL = "https://v1itkby3i6.ufs.sh/f/0Z3x5lFQsHoMA5dMpr0oIsXfxg9jVSmyL65q4rtKROwEDU3G"
 
 api = Blueprint('api', __name__)
 
@@ -39,16 +39,16 @@ def get_centers():
     return jsonify([center.serialize() for center in centers]), 200
 
 @api.route('/centers/seed/navarra', methods=['POST'])
+
 def seed_navarra_centers():
+    import json
     try:
         url = request.json.get("url") if request.is_json else None
         url = url or DEFAULT_NAVARRA_URL
 
-        r = requests.get(url, timeout=20)
-        r.raise_for_status()
-        payload = r.json()
+        r = requests.get(url, stream=True)
+        payload = json.loads(r.text[1:])
 
-        # Según tu muestra, 'records' es una lista de listas:
         # [id,"Codigo Centro","Nombre Centro","Domicilio","Localidad","Codigo Postal","Telefono","Tipo de Centro","Dependencia"]
         records = payload["records"]
 

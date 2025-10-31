@@ -1,4 +1,4 @@
-export const URL_BASE_API = "https://datosabiertos.navarra.es/datastore/dump/f1fc5b52-be72-4088-8cb1-772076e2071c?format=json&bom=True";
+export const URL_BASE_API = "https://v1itkby3i6.ufs.sh/f/0Z3x5lFQsHoMA5dMpr0oIsXfxg9jVSmyL65q4rtKROwEDU3G";
 export const OWN_API = "https://haunted-spooky-werewolf-69j69rw6p76hq44-3001.app.github.dev/";
 
 async function register(userData) {
