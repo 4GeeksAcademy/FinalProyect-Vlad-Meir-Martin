@@ -1,5 +1,5 @@
 export const URL_BASE_API = "https://v1itkby3i6.ufs.sh/f/0Z3x5lFQsHoMA5dMpr0oIsXfxg9jVSmyL65q4rtKROwEDU3G";
-export const OWN_API = "https://haunted-spooky-werewolf-69j69rw6p76hq44-3001.app.github.dev/";
+export const OWN_API = "https://crispy-lamp-v6w4wxjg49jj3p9j6-3001.app.github.dev/";
 
 async function register(userData) {
   //variable con el rol del usuario
@@ -14,33 +14,6 @@ async function register(userData) {
   } else {
       return { success: false, message:"Rol no valido o no definido"}
   }
-  //Este codigo estaba antes aqui ->
-  /*
-  try {
-    const response = await fetch(`${OWN_API}api/register/patient`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userData),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      // Manejo de errores
-      console.error("Error en el registro:", data.msg || data.Error);
-      alert(`Error: ${data.msg || data.Error}`);
-      return;
-    }
-
-    console.log("Registro exitoso:", data);
-    alert("¡Te has registrado con éxito! Ahora puedes iniciar sesión.");
-  } catch (error) {
-    console.error("Error de red al registrar:", error);
-    alert("Error de conexión. Inténtalo más tarde.");
-  }*/
- //aqui termina funcion register
 }
 
 //aqui nos enfocamos unicamente a mandar la info a la API
@@ -117,7 +90,7 @@ async function fetchAndRegisterNavarraCenters() {
             },
             // No necesitamos body, solo estamos "despertando" el endpoint
         });
-
+                    
         // 2. Procesamos la respuesta de NUESTRO backend
         const data = await response.json();
         
