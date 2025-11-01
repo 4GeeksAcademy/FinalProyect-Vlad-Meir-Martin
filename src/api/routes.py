@@ -15,7 +15,7 @@ DEFAULT_NAVARRA_URL = "https://v1itkby3i6.ufs.sh/f/0Z3x5lFQsHoMA5dMpr0oIsXfxg9jV
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
-CORS(api, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+#CORS(api, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 
 @api.route('/user', methods=['GET'])
@@ -136,13 +136,13 @@ def register_doctor():
         response = jsonify(
             {"msg": "email, password, nombre y apellido son requeridos."})
         # solucion cors temporal
-        response.headers.add("Access-Control-Allow-Origin", "*")
+        #response.headers.add("Access-Control-Allow-Origin", "*")
         return response, 400
 
     if Doctor.query.filter_by(email=email).first():
         response = jsonify({"msg": "This user already exists."})
         # solucion cors temporal
-        response.headers.add("Access-Control-Allow-Origin", "*")
+        #response.headers.add("Access-Control-Allow-Origin", "*")
         return response, 400
 
     salt = bcrypt.gensalt()
@@ -161,7 +161,7 @@ def register_doctor():
 
     response = jsonify(new_doctor.serialize())
     # solucion temporal CORS
-    response.headers.add("Access-Control-Allow-Origin", "*")
+    #response.headers.add("Access-Control-Allow-Origin", "*")
 
     return response, 201
 
@@ -173,13 +173,17 @@ def create_token_doctor():
     password = data["password"]
 
     user = Doctor.query.filter_by(email=username).first()
-    print(user.id)
+    #print(user.id)
 
     if not user or not bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
         return jsonify({"msg": "Bad username or password"}), 401
 
     access_token = create_access_token(identity=str(user.id))
-    return jsonify({"token": access_token, "user_id": user.id})
+    
+    response = jsonify({"token": access_token, "user_id": user.id})
+    #Solucion temporal CORS
+    #response.headers.add("Access-Control-Allow-Origin", "*")
+    return response, 201
 
 
 @api.route('/doctor/<int:doctor_id>', methods=['PUT'])
@@ -236,7 +240,7 @@ def register_patient():
 
     if Patient.query.filter_by(email=email).first():
         response = jsonify({"msg": "This user already exists."})
-        response.headers.add("Access-Control-Allow-Origin", "*")
+        #response.headers.add("Access-Control-Allow-Origin", "*")
         return response, 400
 
     salt = bcrypt.gensalt()
@@ -255,7 +259,7 @@ def register_patient():
     response = jsonify(new_patient.serialize())
 
     # Solucion temporal CORS
-    response.headers.add("Access-Control-Allow-Origin", "*")
+    #response.headers.add("Access-Control-Allow-Origin", "*")
 
     return response, 201
 
@@ -316,8 +320,13 @@ def create_token_patient():
     if not user or not bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
         return jsonify({"msg": "Bad username or password"}), 401
 
+    
     access_token = create_access_token(identity=str(user.id))
-    return jsonify({"token": access_token, "user_id": user.id})
+    response = jsonify({"token": access_token, "user_id": user.id})
+
+    #solucion temporal cors
+    #response.headers.add("Access-Control-Allow-Origin", "*")
+    return response, 201
 
 
 @api.route("/protected/patient", methods=["GET"])
@@ -334,7 +343,7 @@ def protected_patient():
 def protected_doctor():
     # Access the identity of the current user with get_jwt_identity
     current_user_id = int(get_jwt_identity())
-    print(current_user_id)
+    #print(current_user_id)
     user = Doctor.query.get(current_user_id)
     return jsonify(user.serialize()), 200
 

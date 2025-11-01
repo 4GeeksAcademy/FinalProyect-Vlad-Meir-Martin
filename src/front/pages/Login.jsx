@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import '../css/Login.css'; 
+import { OWN_API, login } from '../services/fetch';
 
 
 function Login() {
@@ -20,7 +21,7 @@ function Login() {
         }
 
         setMessage({ text: `Inicio de sesión exitoso para ${email}. ¡Bienvenido!`, type: 'success' });
-        
+        login(email, password)
         
         setEmail('');
         setPassword('');
