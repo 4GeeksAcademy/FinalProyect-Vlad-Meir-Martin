@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { OWN_API, login } from '../services/fetch';
+import { OWN_API, login, logout } from '../services/fetch';
 import '../css/Login.css'; 
-import { OWN_API, login } from '../services/fetch';
+
 
 function Login() {
     
@@ -193,4 +193,6 @@ function Login() {
         </div>
     );
 }
+
+
 export default Login;

@@ -1,5 +1,5 @@
 export const URL_BASE_API = "https://v1itkby3i6.ufs.sh/f/0Z3x5lFQsHoMA5dMpr0oIsXfxg9jVSmyL65q4rtKROwEDU3G";
-export const OWN_API = "https://caverned-superstition-qr7pxpr97xh6wpp-3001.app.github.dev/";
+export const OWN_API = "https://laughing-happiness-97w9vj9wv94w295w-3001.app.github.dev/";
 
 async function register(userData) {
   //variable con el rol del usuario
@@ -237,4 +237,14 @@ async function getProfile() {
   }
 }
 
-export { register, registerPatient, registerDoctor, login, fetchAndRegisterNavarraCenters }
+// FUNCIÓN DE LOGOUT 
+
+ const logout = () => {
+ 
+    localStorage.removeItem("jwt_token");
+    localStorage.removeItem("user_role");
+    localStorage.removeItem("current_user"); 
+    console.log('Sesión cerrada. Token, rol y datos de perfil eliminados de localStorage.');
+};
+
+export { register, registerPatient, registerDoctor, login, fetchAndRegisterNavarraCenters, logout }

@@ -1,7 +1,3 @@
-/* ======================================================================= */
-/* 1. Estilos Base y Layout del Dashboard */
-/* ======================================================================= */
-
 .dashboard-container { 
     display: flex; 
     max-width: 1200px; 
@@ -25,9 +21,34 @@
     margin-bottom: 30px; 
 }
 
-/* ======================================================================= */
-/* 2. Estilos del Menú Acordeón (Sidebar) */
-/* ======================================================================= */
+.header-row {
+    display: flex;
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 10px;
+}
+
+.content h1 {
+    margin: 0; 
+    color: #333;
+}
+
+.logout-button {
+    background-color: #f44336; /* Rojo */
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    font-size: 0.9em;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logout-button:hover {
+    background-color: #d32f2f; 
+}
 
 .accordion-item { 
     margin-bottom: 8px; 
@@ -54,20 +75,17 @@
     font-size: 1.2em; 
     margin-right: 10px; 
 }
-/* Contenido del Acordeón */
 .accordion-content { 
     max-height: 0; 
     padding: 0 15px; 
     overflow: hidden; 
-    /* Transición suave para el efecto de desplegado */
     transition: max-height 0.3s ease-out, padding 0.3s ease-out; 
     background-color: #f9f9f9; 
 }
 .accordion-content.active { 
-    max-height: 500px; /* Valor alto para asegurar que se despliega */
+    max-height: 500px; 
     padding: 15px; 
 }
-/* Flecha de expansión */
 .arrow { 
     transition: transform 0.3s;
     font-weight: normal; 
@@ -75,7 +93,7 @@
 .rotated { 
     transform: rotate(90deg); 
 }
-/* Enlaces secundarios */
+
 .secondary-link { 
     display: block; 
     padding: 10px 0; 
@@ -92,7 +110,6 @@
     padding-left: 5px; 
 }
 
-/* Placeholder (Bienvenida / Otras Vistas No Desarrolladas) */
 .placeholder-content {
     margin-top: 30px; 
     padding: 20px; 
@@ -101,9 +118,6 @@
     border-radius: 4px;
 }
 
-/* ======================================================================= */
-/* 3. Estilos de Botones de Acceso Rápido */
-/* ======================================================================= */
 
 .quick-access-buttons {
     display: flex; 
@@ -112,7 +126,7 @@
 }
 
 .quick-button {
-    flex: 1; /* Misma anchura para todos los botones */
+    flex: 1; 
     padding: 20px 10px;
     font-size: 1.1em;
     font-weight: bold;
@@ -151,11 +165,6 @@
     background-color: #dc3545; 
 }
 
-
-/* ======================================================================= */
-/* 4. Estilos de la Vista 'AgendarCita' (Componente Interno) */
-/* ======================================================================= */
-
 .cita-container {
     padding: 20px;
     background-color: white;
@@ -168,7 +177,6 @@
     margin-bottom: 20px;
 }
 
-/* Selector de Mes/Año */
 .date-selector-mock {
     display: flex;
     justify-content: space-between;
@@ -191,14 +199,12 @@
     cursor: not-allowed;
 }
 
-/* Contenedor para centrar la cuadrícula del calendario */
 .centered-calendar-container {
     display: flex;
     justify-content: center; 
     margin-bottom: 30px;
 }
 
-/* Estilos del Calendario */
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr); 
@@ -223,7 +229,7 @@
     border-radius: 4px;
     transition: background-color 0.2s;
     font-weight: 500;
-    position: relative; /* Necesario para posicionar el indicador */
+    position: relative; 
 }
 
 .day-cell:not(.empty):hover {
@@ -236,17 +242,15 @@
     border: none;
 }
 
-/* Indicador de cita existente (ACTUALIZADO: Rojo y más grande) */
 .appointment-indicator {
     position: absolute;
-    top: 0px; /* Un poco más centrado arriba */
+    top: 0px; 
     right: 0px; 
-    font-size: 1.1em; /* Un poco más grande para visibilidad */
+    font-size: 1.1em; 
     line-height: 1;
-    color: #dc3545; /* Color rojo para contraste */
+    color: #dc3545; 
 }
 
-/* Días NO LABORABLES (Sábados y Domingos) */
 .day-cell.unavailable-day {
     background-color: #f7e0e0; 
     color: #8c0000;
@@ -258,13 +262,11 @@
 }
 
 
-/* Días con disponibilidad */
 .day-cell.has-availability {
     background-color: #d1e7ff; 
     border-color: #007bff;
 }
 
-/* Día seleccionado */
 .day-cell.selected {
     background-color: #007bff;
     color: white;
@@ -272,7 +274,6 @@
     border-color: #007bff;
 }
 
-/* Panel de Horas Disponibles */
 .availability-panel {
     border: 1px solid #ccc;
     padding: 20px;
@@ -315,7 +316,6 @@
     font-style: italic;
 }
 
-/* Botón de confirmación final */
 .confirmation-box {
     text-align: center;
     margin-top: 30px;
@@ -333,10 +333,6 @@
     transition: background-color 0.2s;
 }
 
-
-/* ======================================================================= */
-/* 5. Estilos de Fila de Cita Confirmada (Base para Gestión) */
-/* ======================================================================= */
 
 .confirmation-row {
     background-color: #d4edda; 
@@ -368,9 +364,6 @@
     font-weight: 500; 
 }
 
-/* ======================================================================= */
-/* 6. Estilos para GestionarCitas (FUSIONADO) */
-/* ======================================================================= */
 
 .appointment-view {
     padding: 20px;
@@ -402,27 +395,25 @@
 
 .modification-actions {
     margin-top: 20px;
-    display: flex; /* Para alinear los botones en la misma fila */
-    justify-content: space-between; /* Mueve un botón a la izquierda y otro a la derecha */
+    display: flex; 
+    justify-content: space-between; 
     gap: 15px;
 }
 
-/* Estilo para el botón Reagendar (confirm-button) en la gestión */
 .modification-actions .confirm-button {
     padding: 10px 20px;
     font-size: 1em;
-    flex: 1; /* Permite que el botón de reagendar ocupe espacio */
-    max-width: 250px; /* Limita su tamaño */
-    background-color: #ffc107; /* Color de Modificar */
+    flex: 1; 
+    max-width: 250px; 
+    background-color: #ffc107; 
     color: #333;
 }
 
-/* Estilo para el botón Cancelar (cancel-btn) en la gestión */
 .modification-actions .cancel-btn {
     padding: 10px 20px;
     font-size: 1em;
-    flex: 1; /* Permite que el botón de cancelar ocupe espacio */
-    max-width: 250px; /* Limita su tamaño */
-    flex-direction: row; /* Asegura que el texto no se apile */
-    height: auto; /* Ajusta la altura */
+    flex: 1; 
+    max-width: 250px; 
+    flex-direction: row; 
+    height: auto; 
 }

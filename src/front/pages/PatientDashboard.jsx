@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; 
 import '../css/PatientDashboard.css'; 
 
-// =======================================================================================
 // LÓGICA DE DÍAS Y HORAS
-// =======================================================================================
 
 const generateHours = () => {
     const hours = [];
-    // 9:00 (540 minutos) a 14:00 (840 minutos), intervalo de 30 minutos
     for (let minutes = 540; minutes <= 840; minutes += 30) {
         const h = Math.floor(minutes / 60);
         const m = minutes % 60;
@@ -18,21 +16,17 @@ const generateHours = () => {
 };
 const workingHours = generateHours();
 
-/**
- * Verifica si el día es no laborable (Sábado y Domingo).
- */
+
 const isUnavailableDay = (date) => {
-    const dayOfWeek = date.getDay(); // 0=Dom, 1=Lun, 2=Mar, 3=Mié, 4=Jue, 5=Vie, 6=Sáb
-    return dayOfWeek === 0 || dayOfWeek === 6; // Bloquea Sábados y Domingos
+    const dayOfWeek = date.getDay(); 
+    return dayOfWeek === 0 || dayOfWeek === 6; 
 };
 
-// Obtiene las horas disponibles (filtrando días no laborables y horarios ocupados simulados)
 const getAvailableHours = (date) => {
     if (!date || isUnavailableDay(date)) {
         return []; 
     }
 
-    // SIMULACIÓN: Bloqueamos algunas horas en el día 15
     const occupiedSlots = [];
     if (date.getDate() === 15) {
         occupiedSlots.push('09:00', '14:00');
@@ -41,12 +35,7 @@ const getAvailableHours = (date) => {
     return workingHours.filter(hour => !occupiedSlots.includes(hour));
 };
 
-/**
- * Ordena las citas por fecha y hora cronológicamente (más próxima primero).
- */
 const sortAppointmentsChronologically = (appointments) => {
-    // Es crucial que la comparación sea sobre los objetos originales si vamos a usar .indexOf
-    // para encontrar el índice original después de un sort.
     return [...appointments].sort((a, b) => {
         const dateA = new Date(a.date);
         dateA.setHours(parseInt(a.hour.substring(0, 2)), parseInt(a.hour.substring(3, 5)));
@@ -59,9 +48,7 @@ const sortAppointmentsChronologically = (appointments) => {
 };
 
 
-// =======================================================================================
-// 1. COMPONENTE DE VISTA SECUNDARIA: AgendarCita (Icono de cita actualizado)
-// =======================================================================================
+// 1. COMPONENTE DE VISTA SECUNDARIA: AgendarCita
 
 const AgendarCita = ({ patientName, hospitalName, onAppointmentConfirmed, initialDate, activeAppointments }) => {
     
@@ -83,7 +70,6 @@ const AgendarCita = ({ patientName, hospitalName, onAppointmentConfirmed, initia
     const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
     const startingEmptyDays = (firstDayOfWeek + 6) % 7; 
     
-    // Función para verificar si hay una cita en un día específico del mes/año actual
     const hasAppointmentOnDay = (day) => {
         return activeAppointments.some(cita => 
             cita.date.getDate() === day &&
@@ -166,14 +152,15 @@ const AgendarCita = ({ patientName, hospitalName, onAppointmentConfirmed, initia
             
             {isConfirmed && (
                 <div className="confirmation-row">
-                    <p>✅ **Cita Confirmada**</p>
+                    <p>✅ <strong>Cita Confirmada</strong></p>
                     <div className="details-grid">
-                        <span>**Paciente:** {patientName}</span>
-                        <span>**Hospital:** {hospitalName}</span>
-                        <span>**Fecha y Hora:** {selectedDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })} a las {selectedHour} hrs</span>
+                        <span><strong>Paciente:</strong> {patientName}</span>
+                        <span><strong>Hospital:</strong> {hospitalName}</span>
+                        <span><strong>Fecha y Hora:</strong> {selectedDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })} a las {selectedHour} hrs</span>
                     </div>
                 </div>
             )}
+            
             
 
             <p>Paso 1: Selecciona la fecha y hora. (Horario: Lun-Vie de 9:00 a 14:00)</p>
@@ -184,7 +171,6 @@ const AgendarCita = ({ patientName, hospitalName, onAppointmentConfirmed, initia
                 <button onClick={goToNextMonth} disabled={currentYear >= 2030 && currentMonth === 11}>&gt;</button>
             </div>
 
-            {/* Calendario Centrado */}
             <div className="centered-calendar-container">
                 <div className="calendar-grid">
                     {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
@@ -210,14 +196,12 @@ const AgendarCita = ({ patientName, hospitalName, onAppointmentConfirmed, initia
                                 onClick={() => handleDaySelect(day)}
                             >
                                 {day}
-                                {/* Indicador de cita existente (NUEVO EMOJI Y CSS) */}
                                 {isOccupied && <span className="appointment-indicator">🔴</span>}
                             </div>
                         )})}
                 </div>
             </div>
 
-            {/* Panel de Horas Disponibles */}
             {selectedDate && !isConfirmed && (
                 <div className="availability-panel">
                     <h3>Horas Disponibles para el {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
@@ -240,10 +224,9 @@ const AgendarCita = ({ patientName, hospitalName, onAppointmentConfirmed, initia
                 </div>
             )}
             
-            {/* Botón de Confirmación */}
             {selectedHour && !isConfirmed && (
                 <div className="confirmation-box">
-                    <p>Cita pre-seleccionada: **{selectedDate.toLocaleDateString()} a las {selectedHour}**</p>
+                    <p>Cita pre-seleccionada: <strong>{selectedDate.toLocaleDateString()} a las {selectedHour}</strong></p>
                     <button className="confirm-button" onClick={handleConfirmAppointment}>
                         Confirmar Cita Ahora
                     </button>
@@ -254,9 +237,7 @@ const AgendarCita = ({ patientName, hospitalName, onAppointmentConfirmed, initia
 };
 
 
-// =======================================================================================
-// 2. COMPONENTE DE VISTA SECUNDARIA: GestionarCitas (FUSIONADO y con orden cronológico)
-// =======================================================================================
+// 2. COMPONENTE DE VISTA SECUNDARIA: GestionarCitas
 
 const GestionarCitas = ({ sortedAppointments, onModifyClick, onCancelCita }) => {
     return (
@@ -266,31 +247,29 @@ const GestionarCitas = ({ sortedAppointments, onModifyClick, onCancelCita }) => 
             {sortedAppointments && sortedAppointments.length > 0 ? (
                 sortedAppointments.map((cita, index) => (
                     <div key={index} className="appointment-view gestion-item">
-                        {/* Título Dinámico y Cronológico */}
                         <h3>
                             {index + 1}. Cita {cita.date.getDate()} de {cita.date.toLocaleDateString('es-ES', { month: 'long' })}
                         </h3>
                         <div className="confirmation-row current-appointment">
                             <div className="details-grid">
-                                <span>**Paciente:** {cita.patient}</span>
-                                <span>**Hospital:** {cita.hospital}</span>
-                                <span>**Fecha y Hora:** {cita.dateTimeFormatted}</span>
+                                <span><strong>Paciente:</strong> {cita.patient}</span>
+                                <span><strong>Hospital:</strong> {cita.hospital}</span>
+                                <span><strong>Fecha y Hora:</strong> {cita.dateTimeFormatted}</span>
                             </div>
                         </div>
                         
                         <div className="modification-actions">
-                            {/* Botón Reagendar (Izquierda) */}
                             <button 
                                 className="confirm-button" 
-                                onClick={() => onModifyClick(cita.originalIndex)} // Usamos el índice original
+                                onClick={() => onModifyClick(cita.originalIndex)} 
                             >
                                 Reagendar
                             </button>
                             
-                            {/* Botón Cancelar (Derecha) */}
+                           
                             <button 
                                 className="quick-button button-cancelar cancel-btn" 
-                                onClick={() => onCancelCita(cita.originalIndex)} // Usamos el índice original
+                                onClick={() => onCancelCita(cita.originalIndex)} 
                             >
                                 ¿Cancelar su cita?
                             </button>
@@ -307,9 +286,7 @@ const GestionarCitas = ({ sortedAppointments, onModifyClick, onCancelCita }) => 
 };
 
 
-// =======================================================================================
 // 3. DATOS Y LÓGICA DE NAVEGACIÓN
-// =======================================================================================
 
 const mapPathToView = (path) => {
     return path.split('/').pop(); 
@@ -321,12 +298,11 @@ const patientMenuData = [
         icon: '📅',
         links: [
             { name: 'Agendar cita', path: '/paciente/agendar-cita' },
-            { name: 'Gestionar citas', path: '/paciente/gestionar-citas' }, // NUEVO ENLACE
+            { name: 'Gestionar citas', path: '/paciente/gestionar-citas' }, 
             { name: 'Historial de citas', path: '/paciente/historial-citas' },
             { name: 'Recordatorios automáticos', path: '/paciente/recordatorios' },
         ],
     },
-    // ... (El resto del menú se mantiene igual)
     {
         title: '2. Resultados e informes médicos',
         icon: '🔬',
@@ -384,28 +360,68 @@ const patientMenuData = [
     },
 ];
 
-// =======================================================================================
 // 4. COMPONENTE PRINCIPAL: PatientDashboard
-// =======================================================================================
 
 const PatientDashboard = () => {
+    const navigate = useNavigate();
+    
+    const [patientData, setPatientData] = useState({
+        fullName: 'Paciente', 
+        hospital: 'Hospital'
+    });
+    
     const [currentView, setCurrentView] = useState('welcome'); 
     const [openAccordion, setOpenAccordion] = useState(null); 
     const [activeAppointments, setActiveAppointments] = useState([]); 
     const [isModifying, setIsModifying] = useState(false);
     const [appointmentToModifyIndex, setAppointmentToModifyIndex] = useState(null); 
+    
+    const hospitalName = patientData.hospital;
 
-    // Simulación de datos del usuario logueado
-    const patientName = "María Gómez"; 
-    const hospitalName = "Hospital General San Juan";
+    useEffect(() => {
+        let userDataString = localStorage.getItem("current_user");
+
+        if (!userDataString) {
+            console.warn("No se encontró 'current_user' en localStorage. Usando datos de prueba.");
+            
+            userDataString = JSON.stringify({
+                user: {
+                    first_name: "NombreReal",
+                    last_name: "ApellidoReal",
+                },
+                hospitalName: "Nombre del Hospital"
+            });
+        }
+        
+        if (userDataString) {
+            try {
+                const data = JSON.parse(userDataString);
+                
+                const name = data.first_name || 'Usuario';
+                const lastName = data.last_name || 'Invitado';
+                const fullPatientName = `${name} ${lastName}`;
+
+                setPatientData({
+                    fullName: fullPatientName,
+                    hospital: data.hospitalName || 'Hospital General' 
+                });
+            } catch (error) {
+                console.error("Error al parsear datos del paciente:", error);
+            }
+        }
+    }, []); 
+    
+    const handleLogout = () => {
+        localStorage.removeItem("current_user"); 
+        navigate('/login'); 
+    };
+
 
     const handleNavigationClick = (path) => {
         const viewKey = mapPathToView(path);
         
-        // El modo modificación solo se activa para agendar-cita (calendario)
         if (viewKey !== 'agendar-cita') {
             setIsModifying(false);
-            // Solo reseteamos el índice si no es la vista de gestión, para que se mantenga el contexto
             if (viewKey !== 'gestionar-citas') {
                 setAppointmentToModifyIndex(null);
             }
@@ -413,39 +429,34 @@ const PatientDashboard = () => {
         setCurrentView(viewKey);
     };
     
-    // Handler cuando AgendarCita confirma una cita
     const handleAppointmentConfirmed = (appointmentDetails) => {
         let newAppointments;
 
         if (isModifying && appointmentToModifyIndex !== null) {
-            // Caso de MODIFICACIÓN
             newAppointments = activeAppointments.map((cita, index) => 
                 index === appointmentToModifyIndex ? appointmentDetails : cita
             );
             setIsModifying(false);
             setAppointmentToModifyIndex(null);
         } else {
-            // Caso de NUEVA CITA
             newAppointments = [...activeAppointments, appointmentDetails];
         }
         
         setActiveAppointments(newAppointments);
-        setCurrentView('gestionar-citas'); // Redirige a la nueva vista de gestión
+        setCurrentView('gestionar-citas'); 
     };
 
-    // Handler cuando GestionarCitas quiere reagendar
     const handleModifyClick = (originalIndex) => {
         setAppointmentToModifyIndex(originalIndex); 
         setIsModifying(true); 
-        setCurrentView('agendar-cita'); // Abre el calendario
+        setCurrentView('agendar-cita'); 
     };
     
-    // Handler cuando GestionarCitas quiere cancelar
     const handleCancelCita = (indexToCancel) => {
         if (window.confirm("¿Estás seguro de que quieres CANCELAR esta cita?")) {
             const newAppointments = activeAppointments.filter((_, index) => index !== indexToCancel);
             setActiveAppointments(newAppointments);
-            setCurrentView('gestionar-citas'); // Mantener en la vista de gestión
+            setCurrentView('gestionar-citas'); 
             console.log(`Cita N° ${indexToCancel + 1} Cancelada.`);
         }
     };
@@ -457,7 +468,7 @@ const PatientDashboard = () => {
     const handleQuickAccessClick = (action) => {
         const pathMap = {
             'Tus citas': '/paciente/agendar-cita', 
-            'Gestionar citas': '/paciente/gestionar-citas', // NUEVO BOTÓN RÁPIDO
+            'Gestionar citas': '/paciente/gestionar-citas', 
         };
         handleNavigationClick(pathMap[action]);
     };
@@ -465,9 +476,7 @@ const PatientDashboard = () => {
     const renderContent = () => {
         const citaToModify = appointmentToModifyIndex !== null ? activeAppointments[appointmentToModifyIndex] : null;
         
-        // Preparamos la lista ordenada y con el índice original para las vistas de gestión
-        const sortedAppointmentsWithIndex = sortAppointmentsChronologically(activeAppointments).map((cita, index, array) => {
-            // Buscamos el índice original del objeto dentro del array activo sin ordenar
+        const sortedAppointmentsWithIndex = sortAppointmentsChronologically(activeAppointments).map((cita) => {
             const originalIndex = activeAppointments.indexOf(cita);
             return { ...cita, originalIndex };
         });
@@ -477,14 +486,14 @@ const PatientDashboard = () => {
             case 'agendar-cita':
                 return (
                     <AgendarCita 
-                        patientName={patientName} 
+                        patientName={patientData.fullName} 
                         hospitalName={hospitalName} 
                         onAppointmentConfirmed={handleAppointmentConfirmed} 
                         initialDate={citaToModify ? citaToModify.date : null}
                         activeAppointments={activeAppointments} 
                     />
                 );
-            case 'gestionar-citas': // NUEVA VISTA
+            case 'gestionar-citas': 
                 return (
                     <GestionarCitas 
                         sortedAppointments={sortedAppointmentsWithIndex} 
@@ -505,7 +514,6 @@ const PatientDashboard = () => {
 
     return (
         <div className="dashboard-container">
-            {/* Sidebar con el menú de acordeón */}
             <div className="sidebar">
                 <h2 className="main-title">👋 Panel de Control del Paciente</h2>
                 
@@ -514,7 +522,6 @@ const PatientDashboard = () => {
 
                     return (
                         <div key={index} className="accordion-item">
-                            {/* Header del acordeón */}
                             <div 
                                 className="accordion-header" 
                                 onClick={() => handleAccordionToggle(item.title)}
@@ -525,10 +532,8 @@ const PatientDashboard = () => {
                                 <span className={`arrow ${isOpen ? 'rotated' : ''}`}>&gt;</span>
                             </div>
 
-                            {/* Contenido del acordeón */}
                             <div className={`accordion-content ${isOpen ? 'active' : ''}`}>
                                 {item.links.map((link, linkIndex) => {
-                                    // Filtramos los enlaces obsoletos (Modificar cita y Cancelar cita)
                                     if (link.name === 'Modificar cita' || link.name === 'Cancelar cita') return null;
 
                                     return (
@@ -538,7 +543,6 @@ const PatientDashboard = () => {
                                             className="secondary-link"
                                             onClick={(e) => {
                                                 e.preventDefault();
-                                                // Mapeo especial para los enlaces que se fusionaron
                                                 let path = link.path;
                                                 if (path.includes('modificar-cita') || path.includes('cancelar-cita')) {
                                                     path = '/paciente/gestionar-citas';
@@ -556,12 +560,16 @@ const PatientDashboard = () => {
                 })}
             </div>
 
-            {/* Contenido principal */}
             <div className="content">
-                <h1>Bienvenido/a, {patientName}</h1> 
+                <div className="header-row">
+                    <h1>Bienvenido/a, {patientData.fullName}</h1> 
+                    <button className="logout-button" onClick={handleLogout}>
+                        Salir
+                    </button>
+                </div>
+                
                 <p>Tu información de salud a un clic. Utiliza el menú lateral o el acceso rápido para navegar.</p>
                 
-                {/* SECCIÓN DE BOTONES DE ACCESO RÁPIDO (AJUSTADO) */}
                 <div className="quick-access-buttons">
                     
                     <button 
@@ -574,17 +582,14 @@ const PatientDashboard = () => {
                     
                     <button 
                         className="quick-button button-modificar"
-                        onClick={() => handleQuickAccessClick('Gestionar citas')} // RENOMBRADO
+                        onClick={() => handleQuickAccessClick('Gestionar citas')} 
                     >
                         <span className="button-icon">✏️</span>
                         Gestionar citas
                     </button>
                     
-                    {/* ELIMINADO: Botón rápido de Cancelar cita */}
-                    
                 </div>
                 
-                {/* Renderizado Dinámico del Contenido */}
                 {renderContent()}
             </div>
         </div>
