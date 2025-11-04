@@ -183,7 +183,7 @@ class Appointment(db.Model):
                 "doctor_id": self.doctor_id,
                 "patient_id": self.patient_id,
                 "center_id": self.center_id,
-                "appointment_date": self.appointment_date,
+                "appointment_date": self.appointment_date.isoformat(),
                 "status": self.status
             }
     
