@@ -417,3 +417,173 @@
     flex-direction: row; 
     height: auto; 
 }
+
+.warning-notification {
+    background-color: #fff3cd; /* Amarillo claro de advertencia */
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.warning-notification h4 {
+    color: #d09904;
+    margin-top: 0;
+}
+
+.warning-notification strong {
+    font-weight: bold;
+}
+
+.button-select-center {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+    border-color: #ffc107 !important;
+    margin-top: 10px;
+}
+
+.button-select-center:hover {
+    background-color: #e0a800 !important;
+    border-color: #d39e00 !important;
+}
+
+/* Estilos para Notificación de Éxito/Info en el Contenido Principal */
+.info-notification {
+    background-color: #d4edda; /* Verde claro de éxito/info */
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+/* Estilos para la vista de selección de centro */
+.select-center-box {
+    background-color: #e9f5ff; /* Azul muy claro para selección */
+    border: 1px solid #b8daff;
+    color: #004085;
+}
+
+.select-center-box h3 {
+    color: #0056b3;
+}
+
+.centers-list {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.center-button {
+    flex: 1 1 200px; /* Permite que los botones crezcan y envuelvan */
+    padding: 10px;
+    border: 1px solid #adb5bd;
+    border-radius: 5px;
+    background-color: #ffffff;
+    cursor: pointer;
+    text-align: left;
+}
+
+.center-button:hover,
+.center-button.selected {
+    border-color: #007bff;
+    background-color: #cce5ff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.current-selection {
+    font-style: italic;
+    margin-top: -10px;
+    margin-bottom: 10px;
+}
+
+/* Estilos adicionales para AgendarCita */
+.past-day {
+    background-color: #f0f0f0 !important;
+    color: #aaaaaa !important;
+    cursor: not-allowed !important;
+}
+.past-day:hover {
+    border-color: #cccccc !important;
+}
+
+/* Estilos adicionales para enlaces de menú deshabilitados */
+.secondary-link.disabled-link {
+    color: #aaa !important;
+    pointer-events: none; /* Desactiva el clic */
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.warning-indicator {
+    margin-left: 5px;
+    color: orange;
+}
+
+.success-message {
+    background-color: #d4edda !important;
+    border: 1px solid #c3e6cb !important;
+    color: #155724 !important;
+}
+/* Estilo para el botón de cambio de centro en la notificación */
+.info-notification .button-change-center {
+    margin-left: 15px;
+    padding: 5px 10px;
+    font-size: 0.8em;
+    background-color: #6c757d; /* Gris para indicar una acción secundaria */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.info-notification .button-change-center:hover {
+    background-color: #5a6268;
+}
+
+.info-notification p {
+    display: flex; /* Asegura que el texto y el botón estén en línea */
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navigation-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 5px 0;
+}
+
+.go-back-button {
+    background: #e9ecef; /* Gris claro para el botón de acción secundaria */ 
+    border: 1px solid #ced4da; 
+    padding: 8px 15px; 
+    border-radius: 5px; 
+    cursor: pointer;
+    font-weight: bold;
+    color: #333;
+    font-size: 0.9em;
+}
+
+.go-back-button:hover {
+    background: #d3d9df;
+}
+
+.change-center-button-global {
+    background: #6c757d; /* Gris oscuro para acción de configuración */ 
+    color: white; 
+    border: none; 
+    padding: 8px 15px; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.change-center-button-global:hover {
+    background: #5a6268; 
+}

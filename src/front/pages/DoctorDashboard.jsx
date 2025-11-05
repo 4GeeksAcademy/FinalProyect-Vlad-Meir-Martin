@@ -11,6 +11,7 @@ const getTodayDateKey = () => new Date().toLocaleDateString('es-ES', { year: 'nu
 
 // Datos  Simulación 
 
+
 const initialAppointments = [
     { id: 100, dateKey: '20/10/2025', time: '08:00', patient: 'Pedro Solís', reason: 'Primera consulta', status: 'Pendiente' },
     { id: 101, dateKey: '22/10/2025', time: '09:00', patient: 'Ana López García', reason: 'Revisión anual', status: 'En consulta' },
