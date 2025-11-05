@@ -1243,7 +1243,7 @@ const PatientDashboard = () => {
                 <div className="header-row">
                     <h1>Bienvenido/a, {patientData.fullName}</h1> 
                     <button className="logout-button" onClick={handleLogout}>
-                        Salir
+                        Cerrar Sesión
                     </button>
                 </div>
                 
