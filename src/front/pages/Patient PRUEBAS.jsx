@@ -892,12 +892,7 @@ export default PatientDashboard;
 
 
 
-
-
-
-
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../css/PatientDashboard.css';
 
@@ -910,11 +905,9 @@ export const OWN_API = "https://laughing-happiness-97w9vj9wv94w295w-3001.app.git
 const fetchHealthCenters = async () => {
     try {
         const response = await fetch(`${OWN_API}api/centers`);
-
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
         }
-        
         const data = await response.json();
         return data.map(center => ({
             id: center.id,
@@ -923,7 +916,7 @@ const fetchHealthCenters = async () => {
         }));
     } catch (error) {
         console.error("Error al obtener centros de la API:", error);
-        throw new Error("No se pudo conectar con la API para cargar los centros. (Verifica tu configuración CORS en Flask)");
+        throw new Error("No se pudo conectar con la API para cargar los centros.");
     }
 };
 
@@ -936,7 +929,7 @@ const fetchDoctors = async () => {
         const data = await response.json();
         return data.map(doctor => ({
             id: doctor.id,
-            name: doctor.name,
+            name: doctor.last_name, 
             specialty: doctor.specialty || 'Especialidad no definida',
             center_id: doctor.center_id || doctor.centerId
         }));
@@ -998,7 +991,7 @@ const safeJsonParse = (key) => {
 };
 
 // =================================================================
-// 🕒 LÓGICA DE DÍAS Y HORAS
+// 🕒 LÓGICA DE DÍAS Y HORAS (CORREGIDA)
 // =================================================================
 
 const generateHours = () => {
@@ -1006,8 +999,9 @@ const generateHours = () => {
     for (let minutes = 540; minutes <= 840; minutes += 30) {
         const h = Math.floor(minutes / 60);
         const m = minutes % 60;
-        const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(3, '0')}`;
-        hours.push(time.substring(0, 5));
+        // FIX: El padding de minutos (m) debe ser 2, no 3.
+        const time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        hours.push(time);
     }
     return hours;
 };
@@ -1023,15 +1017,15 @@ const getAvailableHours = (date, selectedCenterName, activeAppointments) => {
         return [];
     }
     
+    // Simulación de horas ocupadas (puedes eliminar esto si tu API ya las provee)
     const occupiedSlots = [];
     if (selectedCenterName === "Policlínica Norte" && date.getDate() === 15) {
         occupiedSlots.push('09:00', '09:30', '10:00', '14:00');
     } else if (selectedCenterName === "Centro Médico El Ejido" && date.getDate() === 15) {
         occupiedSlots.push('12:00', '12:30', '13:00', '13:30', '14:00');
-    } else if (date.getDate() === 15) {
-        occupiedSlots.push('09:00', '14:00');
     }
     
+    // Slots ya reservados por el paciente (estado local)
     activeAppointments.forEach(cita => {
         const citaDate = new Date(cita.date);
         if (cita.center === selectedCenterName && 
@@ -1055,7 +1049,7 @@ const sortAppointmentsChronologically = (appointments) => {
 };
 
 // =================================================================
-// 5. COMPONENTE DE VISTA SECUNDARIA: SelectDoctor
+// 5. COMPONENTE: SelectDoctor (Seleccionar Especialidad)
 // =================================================================
 
 const SelectDoctor = ({ center, allDoctors, onSelectDoctor, onGoToAgendarCita, onLoading, onError }) => {
@@ -1127,7 +1121,7 @@ const SelectDoctor = ({ center, allDoctors, onSelectDoctor, onGoToAgendarCita, o
 };
 
 // =================================================================
-// 1. COMPONENTE DE VISTA SECUNDARIA: AgendarCita
+// 1. COMPONENTE: AgendarCita
 // =================================================================
 
 const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppointmentConfirmed, activeAppointments, onGoToGestionarCitas }) => {
@@ -1338,7 +1332,7 @@ const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppoin
 };
 
 // =================================================================
-// 2. COMPONENTE DE VISTA SECUNDARIA: GestionarCitas
+// 2. COMPONENTE: GestionarCitas
 // =================================================================
 
 const GestionarCitas = ({ sortedAppointments, onModifyClick, onCancelCita }) => {
@@ -1395,7 +1389,7 @@ const GestionarCitas = ({ sortedAppointments, onModifyClick, onCancelCita }) => 
 };
 
 // =================================================================
-// 3. COMPONENTE DE SELECCIÓN DE CENTRO DE SALUD
+// 3. COMPONENTE: SelectHealthCenter
 // =================================================================
 
 const SelectHealthCenter = ({ onSelectCenter, currentCenterName, allCenters, onLoading, onError }) => { 
@@ -1456,6 +1450,8 @@ const SelectHealthCenter = ({ onSelectCenter, currentCenterName, allCenters, onL
 const mapPathToView = (path) => {
     return path.split('/').pop();
 };
+
+// --- MENÚ LATERAL SIMPLIFICADO ---
 const patientMenuData = [
     {
         title: '1. Citas médicas',
@@ -1463,67 +1459,17 @@ const patientMenuData = [
         links: [
             { name: 'Agendar cita', path: '/paciente/agendar-cita' }, 
             { name: 'Gestionar citas', path: '/paciente/gestionar-citas' }, 
-            { name: 'Historial de citas', path: '/paciente/historial-citas' },
-            { name: 'Recordatorios automáticos', path: '/paciente/recordatorios' },
         ],
     },
     {
-        title: '2. Resultados e informes médicos',
-        icon: '🔬',
-        links: [
-            { name: 'Análisis clínicos y de laboratorio', path: '/paciente/analisis' },
-            { name: 'Informes de radiología o diagnóstico', path: '/paciente/radiologia' },
-            { name: 'Informes de alta hospitalaria', path: '/paciente/alta' },
-            { name: 'Historial médico completo', path: '/paciente/historial-medico' },
-        ],
-    },
-    {
-        title: '3. Prescripciones y medicación',
-        icon: '💊',
-        links: [
-            { name: 'Visualizar recetas activas', path: '/paciente/recetas-activas' },
-            { name: 'Descargar receta electrónica', path: '/paciente/descargar-receta' },
-            { name: 'Solicitar renovación o revisión', path: '/paciente/solicitar-renovacion' },
-            { name: 'Historial de medicación', path: '/paciente/historial-medicacion' },
-        ],
-    },
-    {
-        title: '4. Facturación y seguros',
-        icon: '💳',
-        links: [
-            { name: 'Visualizar facturas (pagadas o pendientes)', path: '/paciente/facturas' },
-            { name: 'Realizar pagos online', path: '/paciente/pagos' },
-            { name: 'Consultar cobertura o aseguradora', path: '/paciente/cobertura' },
-        ],
-    },
-    {
-        title: '5. Comunicación directa',
-        icon: '💬',
-        links: [
-            { name: 'Mensajería segura con el médico', path: '/paciente/mensajeria' },
-            { name: 'Solicitudes administrativas', path: '/paciente/solicitudes-adm' },
-            { name: 'Alertas o notificaciones del hospital', path: '/paciente/alertas' },
-        ],
-    },
-    {
-        title: '6. Documentos personales',
-        icon: '📁',
-        links: [
-            { name: 'Subir documentos externos', path: '/paciente/subir-docs' },
-            { name: 'Descargar documentos del hospital', path: '/paciente/descargar-docs' },
-        ],
-    },
-    {
-        title: '7. Perfil y configuración',
+        title: '2. Perfil y configuración',
         icon: '⚙️',
         links: [
-            { name: 'Datos personales y de contacto', path: '/paciente/datos-personales' },
-            { name: 'Preferencias de notificación', path: '/paciente/preferencias' },
-            { name: 'Gestión de contraseñas y seguridad', path: '/paciente/seguridad' },
             { name: 'Seleccionar/Cambiar Centro', path: '/paciente/select-center' }, 
         ],
     },
 ];
+
 const PatientDashboard = () => {
     
     const navigate = useNavigate();
@@ -1546,7 +1492,7 @@ const PatientDashboard = () => {
     const [allDoctors, setAllDoctors] = useState([]);
 
     const [currentView, setCurrentView] = useState('welcome'); 
-    const [openAccordion, setOpenAccordion] = useState(null); 
+    const [openAccordion, setOpenAccordion] = useState('1. Citas médicas'); // Abierto por defecto
     const [activeAppointments, setActiveAppointments] = useState([]); 
     const [isModifying, setIsModifying] = useState(false);
     const [appointmentToModifyIndex, setAppointmentToModifyIndex] = useState(null); 
@@ -1632,16 +1578,18 @@ const PatientDashboard = () => {
         navigate('/login'); 
     };
 
-    const handleSelectCenter = useCallback((center) => {
+    // --- NAVEGACIÓN CORREGIDA (sin useCallback) ---
+    
+    const handleSelectCenter = (center) => {
         setSelectedHealthCenter(center);
         setSelectedDoctor(null);
         handleNavigationClick('/paciente/select-doctor'); 
-    }, []);
+    };
 
-    const handleSelectDoctor = useCallback((doctor) => {
+    const handleSelectDoctor = (doctor) => {
         setSelectedDoctor(doctor);
         handleNavigationClick('/paciente/agendar-cita'); 
-    }, []);
+    };
 
     const handleGoBack = () => {
         if (historyStack.length > 1) {
@@ -1662,6 +1610,7 @@ const PatientDashboard = () => {
     const handleNavigationClick = (path) => {
         const viewKey = mapPathToView(path);
 
+        // Lógica de flujo de citas
         if (viewKey === 'agendar-cita') {
             if (!selectedHealthCenter) { 
                 setCurrentView('select-center');
@@ -1680,6 +1629,7 @@ const PatientDashboard = () => {
             return;
         }
 
+        // Navegación general
         if (viewKey !== currentView) {
             setHistoryStack(prev => {
                 if (prev[prev.length - 1] === viewKey) return prev;
@@ -1698,6 +1648,7 @@ const PatientDashboard = () => {
     };
     
     const handleAppointmentConfirmed = async (appointmentDetails) => {
+        // Formato de fecha requerido por la API: "DD-MM-YYYY HH:MM"
         const appointmentDateString = `${appointmentDetails.date.getDate().toString().padStart(2, '0')}-${(appointmentDetails.date.getMonth() + 1).toString().padStart(2, '0')}-${appointmentDetails.date.getFullYear()} ${appointmentDetails.hour}`;
         
         const apiData = {
@@ -1710,8 +1661,8 @@ const PatientDashboard = () => {
         const result = await createAppointment(apiData);
 
         if (result.success) {
+            // Actualizar estado local solo si la API tuvo éxito
             const selectedCenterData = allCenters.find(c => c.id === selectedHealthCenter.id);
-            
             const centerInfoForAppointment = selectedCenterData 
                 ? { name: selectedCenterData.name, address: selectedCenterData.address } 
                 : { name: appointmentDetails.center, address: 'Dirección no disponible' };
@@ -1722,14 +1673,15 @@ const PatientDashboard = () => {
                 center: appointmentDetails.center,
                 doctor: selectedDoctor.name,
                 specialty: selectedDoctor.specialty,
-                apiId: result.data.id
+                apiId: result.data.id // Guardar el ID de la API por si se necesita para modificar/cancelar
             };
+            
             const updatedAppointments = [...activeAppointments, newAppointment];
             setActiveAppointments(updatedAppointments);
-            return true;
+            return true; // Éxito
         } else {
             alert(`❌ Error al agendar la cita: ${result.message}`);
-            return false;
+            return false; // Fallo
         }
     };
 
@@ -1738,7 +1690,12 @@ const PatientDashboard = () => {
         setIsModifying(true); 
         handleNavigationClick('/paciente/select-doctor'); 
     };
+
     const handleCancelCita = (indexToCancel) => {
+        // Aquí deberías añadir también una llamada a la API para cancelar la cita
+        // const citaACancelar = activeAppointments[indexToCancel];
+        // await cancelAppointmentApi(citaACancelar.apiId);
+        
         if (window.confirm("¿Estás seguro de que quieres CANCELAR esta cita?")) {
             const newAppointments = activeAppointments.filter((_, index) => index !== indexToCancel);
             setActiveAppointments(newAppointments);
@@ -1783,7 +1740,6 @@ const PatientDashboard = () => {
                         activeAppointments={activeAppointments} 
                         onGoToGestionarCitas={() => handleNavigationClick('/paciente/gestionar-citas')} 
                     />
-                
                 );
             case 'gestionar-citas': 
                 return (
@@ -1873,7 +1829,7 @@ const PatientDashboard = () => {
     return (
         <div className="dashboard-container">
             <div className="sidebar">
-                <h2 className="main-title">👋 Panel de Control del Paciente</h2>
+                <h2 className="main-title">👋 Panel de Paciente</h2>
                 
                 {patientMenuData.map((item, index) => {
                    
@@ -1895,7 +1851,6 @@ const PatientDashboard = () => {
                                     const viewKey = mapPathToView(link.path);
                                     const isDisabledLink = (viewKey === 'agendar-cita' && (!selectedHealthCenter || !selectedDoctor));
                                     
-                                    if (link.name.includes('Modificar cita') || link.name.includes('Cancelar cita')) return null;
                                     return (
                                         <a
                                             key={linkIndex}
@@ -1978,4 +1933,3 @@ const PatientDashboard = () => {
 };
 
 export default PatientDashboard;
-

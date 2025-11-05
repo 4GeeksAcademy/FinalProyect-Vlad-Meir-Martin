@@ -587,3 +587,96 @@
 .change-center-button-global:hover {
     background: #5a6268; 
 }
+
+/* --- ESTILOS PARA NOTIFICACIONES MEJORADAS --- */
+
+.placeholder-content {
+    margin-top: 20px;
+}
+
+.warning-notification,
+.info-notification {
+    display: flex;
+    align-items: flex-start; /* Alinea íconos arriba */
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-left: 5px solid; /* Usado para color de énfasis */
+}
+
+.warning-notification {
+    background-color: #fff3cd; /* Amarillo claro */
+    border-left-color: #ffc107; /* Amarillo oscuro */
+    color: #856404;
+}
+
+.error-notification {
+    background-color: #f8d7da; /* Rojo claro */
+    border-left-color: #dc3545; /* Rojo oscuro */
+    color: #721c24;
+}
+
+.info-notification {
+    background-color: #d1ecf1; /* Azul claro */
+    border-left-color: #007bff; /* Azul primario */
+    color: #0c5460;
+}
+
+.icon-wrapper {
+    font-size: 24px;
+    margin-right: 15px;
+    line-height: 1;
+}
+
+.message-content h4 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 1.1em;
+}
+
+.message-content p {
+    margin: 0;
+    font-size: 0.95em;
+}
+
+.message-content small {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+/* Estilos específicos para los botones dentro de las notificaciones */
+.select-required-box .quick-button {
+    margin-top: 10px;
+    padding: 8px 15px;
+    font-size: 0.9em;
+}
+
+/* --- ESTILOS PARA LA NUEVA SELECCIÓN DE ESPECIALIDAD (Dropdown) --- */
+
+.specialty-select-container {
+    margin: 15px 0 20px;
+}
+
+.specialty-dropdown {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    font-size: 1em;
+    appearance: none; /* Oculta la flecha por defecto en algunos navegadores */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%20197.35L146.2%2056.45%205.4%20197.35z%22%2F%3E%3C%2Fsvg%3E'); /* Flecha personalizada */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    cursor: pointer;
+}
+
+.specialty-dropdown:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    outline: none;
+}
