@@ -1,152 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../css/PatientDashboard.css';
+import {
+    fetchHealthCenters,
+    fetchDoctors,
+    createAppointment,
+    updateAppointment,
+    cancelAppointment
+} from '../services/fetch.js';
 
-// =================================================================
-// 🌐 CONFIGURACIÓN Y LÓGICA DE DATOS
-// =================================================================
-
-export const OWN_API = "https://laughing-happiness-97w9vj9wv94w295w-3001.app.github.dev/";
-
-// --- FETCH DE CENTROS ---
-const fetchHealthCenters = async () => {
-    try {
-        const response = await fetch(`${OWN_API}api/centers`);
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
-        }
-        const data = await response.json();
-        return data.map(center => ({
-            id: center.id,
-            name: center.name,
-            address: center.address || 'Dirección no disponible'
-        }));
-    } catch (error) {
-        console.error("Error al obtener centros de la API:", error);
-        throw new Error("No se pudo conectar con la API para cargar los centros. (Verifica tu configuración CORS en Flask)");
-    }
-};
-
-// --- FETCH DE DOCTORES ---
-const fetchDoctors = async () => {
-    try {
-        const response = await fetch(`${OWN_API}api/doctors`);
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
-        }
-        const data = await response.json();
-        return data.map(doctor => ({
-            id: doctor.id,
-            name: doctor.last_name, 
-            specialty: doctor.specialty || 'Especialidad no definida',
-            center_id: doctor.center_id || doctor.centerId
-        }));
-    } catch (error) {
-        console.error("Error al obtener doctores de la API:", error);
-        throw new Error("No se pudo conectar con la API para cargar los doctores.");
-    }
-};
-
-// --- (POST) CREAR CITA ---
-const createAppointment = async (appointmentData) => {
-    try {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            return { success: false, message: 'No estás autenticado. Falta token.' };
-        }
-
-        const response = await fetch(`${OWN_API}api/appointment`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(appointmentData)
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            const errorMessage = `Error: ${response.status} Fallo al crear cita. ${data.msg || data.message || 'Error desconocido'}`;
-            console.error('Error al crear cita en la API', errorMessage, data);
-            return { success: false, message: errorMessage };
-        }
-
-        console.log('Cita creada con éxito en la API', data);
-        return { success: true, data: data };
-
-    } catch (error) {
-        console.error('Error de red al registrar la cita', error);
-        return { success: false, message: 'Error de conexión con el servidor.' }
-    }
-};
-
-// --- (PUT) ACTUALIZAR CITA (REAGENDAR) ---
-async function updateAppointment(appointmentId, updateData) {
-    try {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            return {success: false, message: 'No estás autenticado.'};
-        }
-
-        const response = await fetch (`${OWN_API}api/appointment/${appointmentId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(updateData)
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            const errorMessage = `Error: ${response.status} fallo al modificar cita: ${data.msg || 'Error desconocido'}`;
-            console.error('error al modificar cita', errorMessage);
-            return {success: false, message: errorMessage};
-        }
-
-        console.log('Modificación exitosa', data);
-        return {success: true, data: data};
-
-    } catch (error) {
-        console.error('error de red al modificar la cita', error);
-        return{success: false, message: 'error de conexion'}
-    }
-}
-
-// --- (PUT) CANCELAR CITA ---
-async function cancelAppointment(appointmentId) {
-    try {
-        const token = localStorage.getItem('jwt_token');
-        if (!token) {
-            return {success: false, message: 'No estás autenticado.'};
-        }
-
-        const response = await fetch (`${OWN_API}api/appointment/${appointmentId}/cancel`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            const errorMessage = `Error: ${response.status} fallo al cancelar cita: ${data.msg || 'Error desconocido'}`;
-            console.error('error al cancelar cita', errorMessage);
-            return {success: false, message: errorMessage};
-        }
-
-        console.log('Cita cancelada', data);
-        return {success: true, data: data};
-
-    } catch (error) {
-        console.error('error de red al cancelar cita', error);
-        return{success: false, message: 'error de conexion'}
-    }
-}
-
+export const OWN_API = "https://improved-space-invention-r4w9wj5r9q5pfxwqv-3001.app.github.dev/";
 
 // =================================================================
 // 🛡️ FUNCIÓN DE PARSEO SEGURO PARA LOCALSTORAGE
@@ -192,12 +55,12 @@ const getAvailableHours = (date, selectedCenterName, activeAppointments) => {
     if (!date || isUnavailableDay(date)) {
         return [];
     }
-    
+
     const occupiedSlots = [];
     // Slots ya reservados por el paciente (estado local)
     activeAppointments.forEach(cita => {
         const citaDate = new Date(cita.date);
-        if (cita.center === selectedCenterName && 
+        if (cita.center === selectedCenterName &&
             citaDate.getDate() === date.getDate() &&
             citaDate.getMonth() === date.getMonth() &&
             citaDate.getFullYear() === date.getFullYear()) {
@@ -223,7 +86,7 @@ const sortAppointmentsChronologically = (appointments) => {
 // =================================================================
 
 const SelectDoctor = ({ center, allDoctors, onSelectDoctor, onGoToAgendarCita, onLoading, onError }) => {
-    
+
     // Obtener todas las especialidades únicas para el centro
     const uniqueSpecialties = Array.from(new Set(
         allDoctors
@@ -237,20 +100,20 @@ const SelectDoctor = ({ center, allDoctors, onSelectDoctor, onGoToAgendarCita, o
     const handleSpecialtyChange = (e) => {
         const specialty = e.target.value;
         setSelectedSpecialty(specialty);
-        
+
         // Encontrar el primer doctor disponible para esa especialidad en ese centro
         // Nota: Esto asume que cualquier doctor con la especialidad es válido por ahora.
-        const doctor = allDoctors.find(d => 
+        const doctor = allDoctors.find(d =>
             d.center_id === center.id && d.specialty === specialty
         );
-        
+
         if (doctor) {
             setSelectedDoctor(doctor);
         } else {
-             setSelectedDoctor(null);
+            setSelectedDoctor(null);
         }
     };
-    
+
     const handleConfirmSelection = () => {
         if (selectedDoctor) {
             onSelectDoctor(selectedDoctor); // Notificar al padre con el doctor
@@ -260,7 +123,7 @@ const SelectDoctor = ({ center, allDoctors, onSelectDoctor, onGoToAgendarCita, o
     return (
         <div className="cita-container">
             <h2>🧑‍⚕️ Seleccionar Especialidad</h2>
-            
+
             <div className="info-center-display">
                 <p>Centro de Salud Seleccionado: <strong>{center.name}</strong></p>
             </div>
@@ -273,16 +136,16 @@ const SelectDoctor = ({ center, allDoctors, onSelectDoctor, onGoToAgendarCita, o
             )}
 
             {onError && (
-                 <div className="placeholder-content notification-box error-notification">
+                <div className="placeholder-content notification-box error-notification">
                     <h3>❌ Error de Carga</h3>
                     <p>{onError}</p>
-                 </div>
+                </div>
             )}
 
             {!onLoading && !onError && uniqueSpecialties.length > 0 ? (
                 <>
                     <p>Paso 2: Elige la especialidad que necesitas en <strong>{center.name}</strong>:</p>
-                    
+
                     <div className="specialty-select-container">
                         <select
                             value={selectedSpecialty}
@@ -297,13 +160,13 @@ const SelectDoctor = ({ center, allDoctors, onSelectDoctor, onGoToAgendarCita, o
                     </div>
 
                     {selectedSpecialty && selectedDoctor && (
-                        <div className="confirmation-box" style={{marginTop: '20px'}}>
+                        <div className="confirmation-box" style={{ marginTop: '20px' }}>
                             <p>
-                                Especialidad seleccionada: <strong>{selectedDoctor.specialty}</strong>. 
+                                Especialidad seleccionada: <strong>{selectedDoctor.specialty}</strong>.
                                 Se ha asignado provisionalmente al Médico: <strong>{selectedDoctor.name}</strong>.
                             </p>
-                            <button 
-                                className="confirm-button" 
+                            <button
+                                className="confirm-button"
                                 onClick={handleConfirmSelection}
                             >
                                 Seleccionar Especialidad y Continuar
@@ -325,18 +188,18 @@ const SelectDoctor = ({ center, allDoctors, onSelectDoctor, onGoToAgendarCita, o
 // =================================================================
 
 const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppointmentConfirmed, activeAppointments, onGoToGestionarCitas, isModifying }) => {
-    
+
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-    
-    const [selectedDate, setSelectedDate] = useState(null); 
+
+    const [selectedDate, setSelectedDate] = useState(null);
     const [availableHours, setAvailableHours] = useState([]);
     const [selectedHour, setSelectedHour] = useState(null);
-    const [isConfirmed, setIsConfirmed] = useState(false); 
-    
+    const [isConfirmed, setIsConfirmed] = useState(false);
+
     const dateToRender = new Date(currentYear, currentMonth, 1);
     const monthName = dateToRender.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-    
+
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const firstDayOfWeek = new Date(currentYear, currentMonth, 1).getDay();
     const startingEmptyDays = (firstDayOfWeek + 6) % 7;
@@ -348,7 +211,7 @@ const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppoin
     }, [selectedCenterName, selectedDoctor]);
 
     const hasAppointmentOnDay = (day) => {
-        return activeAppointments.some(cita => 
+        return activeAppointments.some(cita =>
             cita.date.getDate() === day &&
             cita.date.getMonth() === currentMonth &&
             cita.date.getFullYear() === currentYear
@@ -357,7 +220,7 @@ const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppoin
 
     const goToPreviousMonth = () => {
         const today = new Date();
-        if (currentYear === today.getFullYear() && currentMonth === today.getMonth()) return; 
+        if (currentYear === today.getFullYear() && currentMonth === today.getMonth()) return;
         if (currentMonth === 0) {
             setCurrentMonth(11);
             setCurrentYear(currentYear - 1);
@@ -389,32 +252,32 @@ const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppoin
             return;
         }
         setSelectedDate(date);
-        setSelectedHour(null); 
+        setSelectedHour(null);
         setIsConfirmed(false);
-        const hours = getAvailableHours(date, selectedCenterName, activeAppointments); 
+        const hours = getAvailableHours(date, selectedCenterName, activeAppointments);
         setAvailableHours(hours);
     };
     const handleHourSelect = (hour) => {
         setSelectedHour(hour);
-        setIsConfirmed(false); 
+        setIsConfirmed(false);
     };
-    
+
     const handleConfirmAppointment = async () => {
-        if (selectedDate && selectedHour && selectedDoctor) { 
+        if (selectedDate && selectedHour && selectedDoctor) {
             const appointmentDetails = {
                 patient: patientName,
-                center: selectedCenterName, 
+                center: selectedCenterName,
                 doctor: selectedDoctor.name,
                 specialty: selectedDoctor.specialty,
-                date: selectedDate, 
+                date: selectedDate,
                 hour: selectedHour,
                 dateTimeFormatted: `${selectedDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })} a las ${selectedHour} hrs`
             };
-            
+
             const success = await onAppointmentConfirmed(appointmentDetails);
 
             if (success) {
-                 setIsConfirmed(true);
+                setIsConfirmed(true);
             }
         }
     };
@@ -427,16 +290,16 @@ const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppoin
     return (
         <div className="cita-container">
             <h2>📅 {isModifying ? 'Reagendar Cita' : 'Agendar Nueva Cita'}</h2>
-            
+
             <div className="info-center-display">
                 <p>Centro de Salud: <strong>{selectedCenterName}</strong></p>
                 {selectedDoctor && <p>Médico: <strong>{selectedDoctor.name}</strong> ({selectedDoctor.specialty})</p>}
             </div>
-            
+
             {isConfirmed ? (
                 <div className="confirmation-row success-message">
                     <p>✅ <strong>¡Cita {isModifying ? 'Reagendada' : 'Confirmada'} con Éxito!</strong></p>
-                
+
                     <div className="details-grid">
                         <span><strong>Paciente:</strong> {patientName}</span>
                         <span><strong>Centro:</strong> {selectedCenterName}</span>
@@ -445,8 +308,8 @@ const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppoin
                     </div>
                     <div style={{ marginTop: '20px' }}>
                         <p style={{ fontWeight: 'bold' }}>¿Quiere gestionar sus citas agendadas?</p>
-                        <button 
-                            className="confirm-button" 
+                        <button
+                            className="confirm-button"
                             onClick={onGoToGestionarCitas}
                             style={{ backgroundColor: '#007bff' }}
                         >
@@ -457,7 +320,7 @@ const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppoin
             ) : (
                 <>
                     <p>Paso 3: Selecciona la fecha y hora. (Horario: Lun-Vie de 9:00 a 14:00)</p>
-                    
+
                     <div className="date-selector-mock">
                         <button onClick={goToPreviousMonth}>&lt;</button>
                         <span>{monthName.charAt(0).toUpperCase() + monthName.slice(1)}</span>
@@ -465,7 +328,7 @@ const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppoin
                     </div>
 
                     <div className="centered-calendar-container">
-            
+
                         <div className="calendar-grid">
                             {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
                                 <div key={day} className="day-header"><strong>{day}</strong></div>
@@ -477,7 +340,7 @@ const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppoin
                                 const isUnavailable = isUnavailableDay(dateToCheck);
                                 const hasAvailability = getAvailableHours(dateToCheck, selectedCenterName, activeAppointments).length > 0;
                                 return (
-                                    <div 
+                                    <div
                                         key={day}
                                         className={`day-cell 
                                             ${selectedDate && selectedDate.getDate() === day && selectedDate.getMonth() === currentMonth ? 'selected' : ''} 
@@ -501,7 +364,7 @@ const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppoin
                             {availableHours.length > 0 ? (
                                 <div className="hours-list">
                                     {availableHours.map(hour => (
-                                        <button 
+                                        <button
                                             key={hour}
                                             className={`hour-button ${selectedHour === hour ? 'selected-hour' : ''}`}
                                             onClick={() => handleHourSelect(hour)}
@@ -515,8 +378,8 @@ const AgendarCita = ({ patientName, selectedCenterName, selectedDoctor, onAppoin
                             )}
                         </div>
                     )}
-    
-                
+
+
                     {selectedHour && (
                         <div className="confirmation-box">
                             <p>Cita pre-seleccionada: <strong>{selectedDate.toLocaleDateString()} a las {selectedHour}</strong> en <strong>{selectedCenterName}</strong> con <strong>{selectedDoctor.name}</strong></p>
@@ -539,7 +402,7 @@ const GestionarCitas = ({ sortedAppointments, onModifyClick, onCancelCita }) => 
     return (
         <div className="cita-container">
             <h2>✏️ Gestionar Citas Agendadas</h2>
-            
+
             {sortedAppointments && sortedAppointments.length > 0 ? (
                 sortedAppointments.map((cita, index) => (
                     <div key={index} className="appointment-view gestion-item">
@@ -549,30 +412,30 @@ const GestionarCitas = ({ sortedAppointments, onModifyClick, onCancelCita }) => 
                         <div className="confirmation-row current-appointment">
                             <div className="details-grid">
                                 <span><strong>Paciente:</strong> {cita.patient}</span>
-                                
+
                                 <span>
                                     <strong>Centro:</strong> {cita.centerInfo?.name || cita.center || 'Hospital General'}
                                     {cita.centerInfo?.address && <><br /><small>{cita.centerInfo.address}</small></>}
                                 </span>
-                        
+
                                 {cita.doctor && <span><strong>Médico:</strong> {cita.doctor} ({cita.specialty})</span>}
 
                                 <span><strong>Fecha y Hora:</strong> {cita.dateTimeFormatted}</span>
                             </div>
                         </div>
-                        
-                    
+
+
                         <div className="modification-actions">
-                            <button 
-                                className="confirm-button" 
-                                onClick={() => onModifyClick(cita.originalIndex)} 
+                            <button
+                                className="confirm-button"
+                                onClick={() => onModifyClick(cita.originalIndex)}
                             >
                                 Reagendar
                             </button>
-                            
-                            <button 
-                                className="quick-button button-cancelar cancel-btn" 
-                                onClick={() => onCancelCita(cita.originalIndex)} 
+
+                            <button
+                                className="quick-button button-cancelar cancel-btn"
+                                onClick={() => onCancelCita(cita.originalIndex)}
                             >
                                 ¿Cancelar su cita?
                             </button>
@@ -592,7 +455,7 @@ const GestionarCitas = ({ sortedAppointments, onModifyClick, onCancelCita }) => 
 // 3. COMPONENTE: SelectHealthCenter
 // =================================================================
 
-const SelectHealthCenter = ({ onSelectCenter, currentCenterName, allCenters, onLoading, onError }) => { 
+const SelectHealthCenter = ({ onSelectCenter, currentCenterName, allCenters, onLoading, onError }) => {
 
     const centers = allCenters;
 
@@ -618,23 +481,23 @@ const SelectHealthCenter = ({ onSelectCenter, currentCenterName, allCenters, onL
     return (
         <div className="placeholder-content notification-box select-center-box">
             <h3>⚠️ Selección de Centro de Salud</h3>
-            
+
             {currentCenterName ? (
                 <p>El centro actualmente seleccionado es: <strong>{currentCenterName}</strong>. Si deseas <strong>cambiarlo</strong>, elige uno de la lista a continuación:</p>
             ) : (
                 <p>Antes de poder agendar o gestionar citas, por favor, <strong>selecciona tu Centro de Salud</strong> principal:</p>
             )}
 
-            
+
             <div className="centers-list">
                 {centers.map(center => (
                     <button
                         key={center.id}
                         className={`center-button ${currentCenterName === center.name ? 'selected' : ''}`}
-                        onClick={() => onSelectCenter(center)} 
+                        onClick={() => onSelectCenter(center)}
                     >
                         <strong>{center.name}</strong>
-                        
+
                         <br /><small>{center.address}</small>
                     </button>
                 ))}
@@ -657,8 +520,8 @@ const patientMenuData = [
         title: '1. Citas médicas',
         icon: '📅',
         links: [
-            { name: 'Agendar cita', path: '/paciente/agendar-cita' }, 
-            { name: 'Gestionar citas', path: '/paciente/gestionar-citas' }, 
+            { name: 'Agendar cita', path: '/paciente/agendar-cita' },
+            { name: 'Gestionar citas', path: '/paciente/gestionar-citas' },
             { name: 'Historial de citas', path: '/paciente/historial-citas' },
             { name: 'Recordatorios automáticos', path: '/paciente/recordatorios' },
         ],
@@ -716,25 +579,25 @@ const patientMenuData = [
             { name: 'Datos personales y de contacto', path: '/paciente/datos-personales' },
             { name: 'Preferencias de notificación', path: '/paciente/preferencias' },
             { name: 'Gestión de contraseñas y seguridad', path: '/paciente/seguridad' },
-            { name: 'Seleccionar/Cambiar Centro', path: '/paciente/select-center' }, 
+            { name: 'Seleccionar/Cambiar Centro', path: '/paciente/select-center' },
         ],
     },
 ];
 
 const PatientDashboard = () => {
-    
+
     const navigate = useNavigate();
     const [patientData, setPatientData] = useState({
-        fullName: 'Paciente', 
+        fullName: 'Paciente',
         hospital: 'Hospital'
     });
 
     const [loadingCenters, setLoadingCenters] = useState(true);
     const [loadingDoctors, setLoadingDoctors] = useState(false);
     const [apiError, setApiError] = useState(null);
-    
+
     const [selectedHealthCenter, setSelectedHealthCenter] = useState(
-        safeJsonParse('selectedHealthCenter') 
+        safeJsonParse('selectedHealthCenter')
     );
     const [selectedDoctor, setSelectedDoctor] = useState(
         safeJsonParse('selectedDoctor')
@@ -742,12 +605,12 @@ const PatientDashboard = () => {
     const [allCenters, setAllCenters] = useState([]);
     const [allDoctors, setAllDoctors] = useState([]);
 
-    const [currentView, setCurrentView] = useState('welcome'); 
+    const [currentView, setCurrentView] = useState('welcome');
     const [openAccordion, setOpenAccordion] = useState('1. Citas médicas'); // Abierto por defecto
-    const [activeAppointments, setActiveAppointments] = useState([]); 
+    const [activeAppointments, setActiveAppointments] = useState([]);
     const [isModifying, setIsModifying] = useState(false);
-    const [appointmentToModifyIndex, setAppointmentToModifyIndex] = useState(null); 
-    
+    const [appointmentToModifyIndex, setAppointmentToModifyIndex] = useState(null);
+
     const [historyStack, setHistoryStack] = useState(['welcome']);
 
     useEffect(() => {
@@ -762,20 +625,19 @@ const PatientDashboard = () => {
         if (userDataString) {
             try {
                 const data = JSON.parse(userDataString);
-                const name = data.user?.first_name || data.first_name || 'Usuario'; 
+                const name = data.user?.first_name || data.first_name || 'Usuario';
                 const lastName = data.user?.last_name || data.last_name || 'Invitado';
                 const fullPatientName = `${name} ${lastName}`;
                 setPatientData({
                     fullName: fullPatientName,
                     hospital: data.hospitalName || 'Hospital General',
-                    id: data.user?.id || data.id || null 
+                    id: data.user?.id || data.id || null
                 });
-            } catch (error) 
-            {
+            } catch (error) {
                 console.error("Error al parsear datos del paciente:", error);
             }
         }
-        
+
         const loadApiData = async () => {
             setLoadingCenters(true);
             setLoadingDoctors(true);
@@ -783,7 +645,7 @@ const PatientDashboard = () => {
             try {
                 const [centersData, doctorsData] = await Promise.all([
                     fetchHealthCenters(),
-                    fetchDoctors() 
+                    fetchDoctors()
                 ]);
 
                 setAllCenters(centersData);
@@ -796,7 +658,7 @@ const PatientDashboard = () => {
                         setSelectedDoctor(null);
                     }
                 }
-                
+
             } catch (err) {
                 console.error("Error al cargar datos de la API:", err.message);
                 setApiError(err.message);
@@ -805,7 +667,7 @@ const PatientDashboard = () => {
                 setLoadingDoctors(false);
             }
         };
-        
+
         loadApiData();
     }, []);
 
@@ -813,7 +675,7 @@ const PatientDashboard = () => {
         if (selectedHealthCenter) {
             localStorage.setItem('selectedHealthCenter', JSON.stringify(selectedHealthCenter));
         } else {
-             localStorage.removeItem('selectedHealthCenter');
+            localStorage.removeItem('selectedHealthCenter');
         }
 
         if (selectedDoctor) {
@@ -824,30 +686,30 @@ const PatientDashboard = () => {
     }, [selectedHealthCenter, selectedDoctor]);
 
     const handleLogout = () => {
-        localStorage.removeItem("current_user"); 
-        localStorage.removeItem("selectedHealthCenter"); 
+        localStorage.removeItem("current_user");
+        localStorage.removeItem("selectedHealthCenter");
         localStorage.removeItem("selectedDoctor");
-        navigate('/login'); 
+        navigate('/login');
     };
 
     // --- NAVEGACIÓN (Sin useCallback para evitar 'stale state' y refrescos) ---
-    
+
     const handleSelectCenter = (center) => {
         setSelectedHealthCenter(center);
         setSelectedDoctor(null);
-        handleNavigationClick('/paciente/select-doctor'); 
+        handleNavigationClick('/paciente/select-doctor');
     };
 
     const handleSelectDoctor = (doctor) => {
         setSelectedDoctor(doctor);
-        handleNavigationClick('/paciente/agendar-cita'); 
+        handleNavigationClick('/paciente/agendar-cita');
     };
 
     const handleGoBack = () => {
         if (historyStack.length > 1) {
             const newStack = historyStack.slice(0, -1);
             const previousView = newStack[newStack.length - 1];
-            
+
             if (previousView !== 'agendar-cita') {
                 setIsModifying(false);
                 setAppointmentToModifyIndex(null);
@@ -864,7 +726,7 @@ const PatientDashboard = () => {
 
         // Lógica de flujo de citas
         if (viewKey === 'agendar-cita') {
-            if (!selectedHealthCenter) { 
+            if (!selectedHealthCenter) {
                 setCurrentView('select-center');
                 setHistoryStack(prev => [...prev, 'select-center']);
                 return;
@@ -874,7 +736,7 @@ const PatientDashboard = () => {
                 return;
             }
         }
-        
+
         if (viewKey === 'select-doctor' && !selectedHealthCenter) {
             setCurrentView('select-center');
             setHistoryStack(prev => [...prev, 'select-center']);
@@ -898,27 +760,27 @@ const PatientDashboard = () => {
             setCurrentView(viewKey);
         }
     };
-    
+
     // --- LÓGICA DE CITAS (CREAR Y MODIFICAR) ---
     const handleAppointmentConfirmed = async (appointmentDetails) => {
         // Formato de fecha requerido por la API: "DD-M-YYYY H:M"
         const appointmentDate = appointmentDetails.date;
         const [hour, minute] = appointmentDetails.hour.split(':').map(Number);
-        
+
         // Creamos una cadena de fecha sin el padStart de 2 digitos para el mes/dia si no lo requiere el backend
         const appointmentDateString = `${appointmentDate.getDate()}-${(appointmentDate.getMonth() + 1)}-${appointmentDate.getFullYear()} ${hour}:${minute}`;
-        
+
         // --- LÓGICA DE MODIFICACIÓN (PUT) ---
         if (isModifying && appointmentToModifyIndex !== null) {
             const originalAppointment = activeAppointments[appointmentToModifyIndex];
             const appointmentId = originalAppointment.apiId;
-            
+
             if (!appointmentId) {
                 alert("Error: No se puede modificar una cita que no tiene un ID de la API.");
                 return false;
             }
 
-            const apiData = { 
+            const apiData = {
                 appointment_date: appointmentDateString,
                 doctor_id: selectedDoctor.id, // Aseguramos que el doctor no ha cambiado si es el mismo centro/especialidad
             };
@@ -932,12 +794,12 @@ const PatientDashboard = () => {
                     hour: appointmentDetails.hour, // Actualiza la hora
                     dateTimeFormatted: appointmentDetails.dateTimeFormatted // Actualiza el string
                 };
-                
-                const updatedAppointments = activeAppointments.map((cita, index) => 
+
+                const updatedAppointments = activeAppointments.map((cita, index) =>
                     index === appointmentToModifyIndex ? updatedAppointment : cita
                 );
                 setActiveAppointments(updatedAppointments);
-                
+
                 // Limpiar estado de modificación
                 setIsModifying(false);
                 setAppointmentToModifyIndex(null);
@@ -947,24 +809,24 @@ const PatientDashboard = () => {
                 return false; // Fallo
             }
         }
-        
+
         // --- LÓGICA DE CREACIÓN (POST) ---
         const apiData = {
-            doctor_id: selectedDoctor.id, 
-            patient_id: patientData.id, 
-            center_id: selectedHealthCenter.id, 
-            appointment_date: appointmentDateString 
+            doctor_id: selectedDoctor.id,
+            patient_id: patientData.id,
+            center_id: selectedHealthCenter.id,
+            appointment_date: appointmentDateString
         };
-        
+
         const result = await createAppointment(apiData);
 
         if (result.success) {
             // Actualizar estado local solo si la API tuvo éxito
             const selectedCenterData = allCenters.find(c => c.id === selectedHealthCenter.id);
-            const centerInfoForAppointment = selectedCenterData 
-                ? { name: selectedCenterData.name, address: selectedCenterData.address } 
+            const centerInfoForAppointment = selectedCenterData
+                ? { name: selectedCenterData.name, address: selectedCenterData.address }
                 : { name: appointmentDetails.center, address: 'Dirección no disponible' };
-            
+
             const newAppointment = {
                 ...appointmentDetails,
                 centerInfo: centerInfoForAppointment,
@@ -973,7 +835,7 @@ const PatientDashboard = () => {
                 specialty: selectedDoctor.specialty,
                 apiId: result.data.id // Guardar el ID de la API
             };
-            
+
             const updatedAppointments = [...activeAppointments, newAppointment];
             setActiveAppointments(updatedAppointments);
             return true; // Éxito
@@ -990,7 +852,7 @@ const PatientDashboard = () => {
 
         // 1. Poner en modo Modificación
         setAppointmentToModifyIndex(originalIndex);
-        setIsModifying(true); 
+        setIsModifying(true);
 
         // 2. Encontrar y setear el centro y doctor originales
         const originalCenter = allCenters.find(c => c.name === appToModify.centerInfo.name);
@@ -1011,21 +873,21 @@ const PatientDashboard = () => {
     // --- LÓGICA CANCELAR (Llama a la API) ---
     const handleCancelCita = async (indexToCancel) => {
         const appointmentToCancel = activeAppointments[indexToCancel];
-        
+
         if (!appointmentToCancel || !appointmentToCancel.apiId) {
             alert("Error: No se puede cancelar esta cita (falta ID de API).");
             return;
         }
 
         if (window.confirm("¿Estás seguro de que quieres CANCELAR esta cita?")) {
-            
+
             const result = await cancelAppointment(appointmentToCancel.apiId);
-            
+
             if (result.success) {
                 // Solo si la API tiene éxito, actualiza el estado local
                 const newAppointments = activeAppointments.filter((_, index) => index !== indexToCancel);
                 setActiveAppointments(newAppointments);
-                setCurrentView('gestionar-citas'); 
+                setCurrentView('gestionar-citas');
                 alert("Cita cancelada con éxito.");
             } else {
                 alert(`Error al cancelar la cita: ${result.message}`);
@@ -1036,7 +898,7 @@ const PatientDashboard = () => {
     const handleAccordionToggle = (title) => {
         setOpenAccordion(openAccordion === title ? null : title);
     };
-    
+
     const handleQuickAccessClick = (action) => {
         const pathMap = {
             'Tus citas': '/paciente/agendar-cita',
@@ -1047,13 +909,13 @@ const PatientDashboard = () => {
 
     // --- RENDERIZADO DE NOTIFICACIONES MEJORADO (Respuesta a la Imagen 1) ---
     const renderSelectCenterWarning = () => {
-        
+
         const isWelcomeView = currentView === 'welcome';
 
         return (
             <div className="placeholder-content">
                 <h3>Área de Contenido Principal</h3>
-                
+
                 {apiError && (
                     <div className="warning-notification error-notification api-error-box">
                         <div className="icon-wrapper">❌</div>
@@ -1064,9 +926,9 @@ const PatientDashboard = () => {
                         </div>
                     </div>
                 )}
-                
+
                 {!apiError && loadingCenters && (
-                     <div className="info-notification api-loading-box">
+                    <div className="info-notification api-loading-box">
                         <div className="icon-wrapper">⏳</div>
                         <div className="message-content">
                             <h4>Cargando Datos Iniciales...</h4>
@@ -1107,11 +969,11 @@ const PatientDashboard = () => {
                         </div>
                     </div>
                 ) : null}
-                
-                {isWelcomeView && <p style={{marginTop: '20px'}}>Selecciona una opción del menú lateral o usa los botones de acceso rápido.</p>}
-                
+
+                {isWelcomeView && <p style={{ marginTop: '20px' }}>Selecciona una opción del menú lateral o usa los botones de acceso rápido.</p>}
+
                 {!isWelcomeView && !['agendar-cita', 'gestionar-citas', 'select-center', 'select-doctor'].includes(currentView) && (
-                     <div className="info-notification under-construction-box">
+                    <div className="info-notification under-construction-box">
                         <div className="icon-wrapper">🚧</div>
                         <div className="message-content">
                             <h4>Área en Construcción</h4>
@@ -1125,9 +987,9 @@ const PatientDashboard = () => {
 
     // --- RENDERIZADO DE VISTAS ---
     const renderContent = () => {
-        
+
         const sortedAppointmentsWithIndex = sortAppointmentsChronologically(activeAppointments).map((cita, index) => {
-            const originalIndex = activeAppointments.findIndex(originalCita => 
+            const originalIndex = activeAppointments.findIndex(originalCita =>
                 originalCita.apiId ? originalCita.apiId === cita.apiId : (originalCita.date === cita.date && originalCita.hour === cita.hour)
             );
             return { ...cita, originalIndex: originalIndex !== -1 ? originalIndex : index };
@@ -1137,33 +999,33 @@ const PatientDashboard = () => {
 
         switch (currentView) {
             case 'agendar-cita':
-                if (!selectedHealthCenter || !selectedDoctor) { 
+                if (!selectedHealthCenter || !selectedDoctor) {
                     return renderSelectCenterWarning();
                 }
                 return (
-                    <AgendarCita 
-                        patientName={patientData.fullName} 
+                    <AgendarCita
+                        patientName={patientData.fullName}
                         selectedCenterName={centerName}
                         selectedDoctor={selectedDoctor}
                         onAppointmentConfirmed={handleAppointmentConfirmed}
-                        activeAppointments={activeAppointments} 
-                        onGoToGestionarCitas={() => handleNavigationClick('/paciente/gestionar-citas')} 
+                        activeAppointments={activeAppointments}
+                        onGoToGestionarCitas={() => handleNavigationClick('/paciente/gestionar-citas')}
                         isModifying={isModifying}
                     />
                 );
-            case 'gestionar-citas': 
+            case 'gestionar-citas':
                 return (
-                    <GestionarCitas 
-                        sortedAppointments={sortedAppointmentsWithIndex} 
+                    <GestionarCitas
+                        sortedAppointments={sortedAppointmentsWithIndex}
                         onModifyClick={handleModifyClick}
                         onCancelCita={handleCancelCita}
                     />
                 );
             case 'select-center':
                 return (
-                    <SelectHealthCenter 
-                        onSelectCenter={handleSelectCenter} 
-                        currentCenterName={centerName} 
+                    <SelectHealthCenter
+                        onSelectCenter={handleSelectCenter}
+                        currentCenterName={centerName}
                         allCenters={allCenters}
                         onLoading={loadingCenters}
                         onError={apiError}
@@ -1183,7 +1045,7 @@ const PatientDashboard = () => {
                 );
             case 'welcome':
             default:
-                return renderSelectCenterWarning(); 
+                return renderSelectCenterWarning();
         }
     };
 
@@ -1193,14 +1055,14 @@ const PatientDashboard = () => {
         <div className="dashboard-container">
             <div className="sidebar">
                 <h2 className="main-title">👋 Panel de Paciente</h2>
-                
+
                 {patientMenuData.map((item, index) => {
-                   
+
                     const isOpen = openAccordion === item.title;
                     return (
                         <div key={index} className="accordion-item">
-                            <div 
-                                className="accordion-header" 
+                            <div
+                                className="accordion-header"
                                 onClick={() => handleAccordionToggle(item.title)}
                             >
                                 <div>
@@ -1212,14 +1074,14 @@ const PatientDashboard = () => {
                             <div className={`accordion-content ${isOpen ? 'active' : ''}`}>
                                 {item.links.map((link, linkIndex) => {
                                     const viewKey = mapPathToView(link.path);
-                                    
+
                                     // Deshabilitar "Agendar Cita" si falta centro o doctor
                                     const isDisabledLink = (viewKey === 'agendar-cita' && (!selectedHealthCenter || !selectedDoctor));
-                                    
+
                                     return (
                                         <a
                                             key={linkIndex}
-                                            href="#" 
+                                            href="#"
                                             className={`secondary-link ${isDisabledLink ? 'disabled-link' : ''}`}
                                             onClick={(e) => {
                                                 e.preventDefault();
@@ -1241,27 +1103,27 @@ const PatientDashboard = () => {
 
             <div className="content">
                 <div className="header-row">
-                    <h1>Bienvenido/a, {patientData.fullName}</h1> 
+                    <h1>Bienvenido/a, {patientData.fullName}</h1>
                     <button className="logout-button" onClick={handleLogout}>
                         Cerrar Sesión
                     </button>
                 </div>
-                
+
                 <p>Tu información de salud a un clic. Utiliza el menú lateral o el acceso rápido para navegar.</p>
-                
+
                 <div className="navigation-bar">
                     {historyStack.length > 1 ?
-                    (
-                        <button 
-                            className="go-back-button" 
-                            onClick={handleGoBack}
-                        >
-                            🔙 Volver atrás
-                        </button>
-                    ) : (
-                        <div></div> 
-                    )}
-                    
+                        (
+                            <button
+                                className="go-back-button"
+                                onClick={handleGoBack}
+                            >
+                                🔙 Volver atrás
+                            </button>
+                        ) : (
+                            <div></div>
+                        )}
+
                     {selectedHealthCenter && currentView !== 'select-center' && (
                         <button
                             className="change-center-button-global"
@@ -1271,26 +1133,26 @@ const PatientDashboard = () => {
                         </button>
                     )}
                 </div>
-                
+
                 <div className="quick-access-buttons fixed-buttons">
-                    <button 
+                    <button
                         className="quick-button button-agenda"
-                        onClick={() => handleQuickAccessClick('Tus citas')} 
-                        disabled={!selectedHealthCenter || !selectedDoctor} 
+                        onClick={() => handleQuickAccessClick('Tus citas')}
+                        disabled={!selectedHealthCenter || !selectedDoctor}
                     >
-                        <span className="button-icon">📅</span> 
+                        <span className="button-icon">📅</span>
                         Tus citas
                     </button>
-                    
-                    <button 
+
+                    <button
                         className="quick-button button-modificar"
-                        onClick={() => handleQuickAccessClick('Gestionar citas')} 
+                        onClick={() => handleQuickAccessClick('Gestionar citas')}
                     >
                         <span className="button-icon">✏️</span>
                         Gestionar citas
                     </button>
                 </div>
-                
+
                 {renderContent()}
             </div>
         </div>

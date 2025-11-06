@@ -14,7 +14,7 @@ import requests
 DEFAULT_NAVARRA_URL = "https://v1itkby3i6.ufs.sh/f/0Z3x5lFQsHoMA5dMpr0oIsXfxg9jVSmyL65q4rtKROwEDU3G"
 
 api = Blueprint('api', __name__)
-CORS(api)
+
 
 @api.route('/user', methods=['GET'])
 def get_user():
@@ -34,12 +34,11 @@ def get_all_patient():
 #############################################################################
 
 
-
-
 @api.route('/centers', methods=['GET'])
 def get_centers():
     centers = Center.query.all()
     return jsonify([center.serialize() for center in centers]), 200
+
 
 @api.route('/centers/seed/navarra', methods=['POST'])
 def seed_navarra_centers():
@@ -58,10 +57,10 @@ def seed_navarra_centers():
 
         created = []
         for row in primeros_cinco:
-            name        = row[2]
-            address     = row[3]
-            zip_code    = row[5]
-            phone       = row[6]
+            name = row[2]
+            address = row[3]
+            zip_code = row[5]
+            phone = row[6]
             type_center = row[7]
 
             # evita duplicados por (name,address)
@@ -107,10 +106,12 @@ def create_center():
 #                           ROUTES OF DOCTOR                                #
 #############################################################################
 
+
 @api.route('/doctors', methods=['GET'])
 def get_all_doctors():
     doctors = Doctor.all_doctors()
     return jsonify([doctor.serialize() for doctor in doctors]), 200
+
 
 @api.route("/login/doctor", methods=["POST"])
 def create_token_doctor():
@@ -120,13 +121,12 @@ def create_token_doctor():
 
     user = Doctor.query.filter_by(email=username).first()
     print(user.id)
-    
-    if not user or not bcrypt.checkpw(password.encode("utf-8"),user.password.encode("utf-8")):
+
+    if not user or not bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
         return jsonify({"msg": "Bad username or password"}), 401
-     
+
     access_token = create_access_token(identity=str(user.id))
     return jsonify({"token": access_token, "user_id": user.id})
-
 
 
 @api.route('/register/doctor', methods=['POST'])
@@ -142,7 +142,8 @@ def register_doctor():
     work_days = data.get("work_days")
 
     if not email or not password or not first_name or not last_name:
-        response = jsonify({"msg": "email, password, nombre y apellido son requeridos."})
+        response = jsonify(
+            {"msg": "email, password, nombre y apellido son requeridos."})
         return response, 400
 
     if Doctor.query.filter_by(email=email).first():
@@ -155,14 +156,14 @@ def register_doctor():
 
     # Crear el nuevo doctor con valores falsos para los campos faltantes
     new_doctor = Doctor.create(email=email,
-                    first_name=first_name,
-                    last_name=last_name,
-                    specialty=specialty,
-                    center_id=center_id,
-                    password=hashed_password.decode("utf-8"),
-                    work_days=work_days,
-                    )
-    
+                               first_name=first_name,
+                               last_name=last_name,
+                               specialty=specialty,
+                               center_id=center_id,
+                               password=hashed_password.decode("utf-8"),
+                               work_days=work_days,
+                               )
+
     response = jsonify(new_doctor.serialize())
     response.headers.add("Access-Control-Allow-Origin", "*")
     return response, 201
@@ -208,8 +209,83 @@ def protected_doctor():
     # Access the identity of the current user with get_jwt_identity
     current_user_id = int(get_jwt_identity())
     user = Doctor.query.get(current_user_id)
-    return jsonify (user.serialize()), 200
+    return jsonify(user.serialize()), 200
 
+# api/routes.py (Añadir este código)
+
+
+@api.route("/doctor/appointments", methods=["GET"])
+@jwt_required()
+def get_doctor_appointments():
+    # 1. Obtener el ID del doctor desde el token JWT
+    current_user_id = int(get_jwt_identity())
+
+    # 2. Buscar todas las citas donde el doctor_id coincida
+    # Usamos .all() para obtener una lista de objetos Appointment
+    appointments = Appointment.query.filter_by(doctor_id=current_user_id).all()
+
+    # 3. Serializar la lista de citas
+    # También necesitamos el nombre del paciente para el frontend
+    serialized_appointments = []
+    for app in appointments:
+        # Obtenemos el paciente para obtener su nombre
+        patient = Patient.query.get(app.patient_id)
+
+        # Creamos un objeto de cita más completo para el frontend
+        serialized_app = app.serialize()
+
+        # Formateamos la fecha y hora para que el frontend la entienda
+        # El frontend espera 'DD/MM/YYYY' y 'HH:MM'
+        appointment_dt = app.appointment_date
+        date_key = appointment_dt.strftime("%d/%m/%Y")
+        time_key = appointment_dt.strftime("%H:%M")
+
+        serialized_appointments.append({
+            "id": serialized_app["id"],
+            "dateKey": date_key,
+            "time": time_key,
+            # Nombre completo del paciente
+            "patient": f"{patient.first_name} {patient.last_name}",
+            # Puedes añadir un campo 'reason' al modelo Appointment si lo necesitas
+            "reason": "Consulta médica",
+            "status": serialized_app["status"],
+            "center_id": serialized_app["center_id"],
+            "doctor_id": serialized_app["doctor_id"],
+            "patient_id": serialized_app["patient_id"],
+        })
+
+    return jsonify(serialized_appointments), 200
+
+
+@api.route('/doctor/center', methods=['PUT'])
+@jwt_required()
+def update_doctor_center():
+    # 1. Obtener la identidad del doctor desde el token JWT
+    current_user_id = int(get_jwt_identity())
+    doctor = Doctor.query.get(current_user_id)
+
+    if not doctor:
+        return jsonify({"msg": "Doctor no encontrado o token inválido"}), 404
+
+    # 2. Obtener el center_id del cuerpo de la solicitud
+    data = request.get_json()
+    if not data or 'center_id' not in data:
+        return jsonify({"msg": "El campo 'center_id' es requerido"}), 400
+
+    center_id = data.get('center_id')
+
+    # 3. Verificar que el centro existe
+    center = Center.query.get(center_id)
+    if not center:
+        return jsonify({"msg": "El centro especificado no existe"}), 404
+
+    # 4. Actualizar el centro del doctor usando la función del modelo
+    try:
+        doctor.update(center_id=center_id)
+        return jsonify(doctor.serialize()), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": f"Error al actualizar el centro: {str(e)}"}), 500
 
 #############################################################################
 #                           ROUTES OF PATIENT                               #
@@ -226,7 +302,8 @@ def register_patient():
     password = data.get("password")
 
     if not email or not password or not first_name or not last_name or not birth_date:
-        response = jsonify({"msg": "Todos los campos principales (email, password, nombre, apellido, fecha) son requeridos."})
+        response = jsonify(
+            {"msg": "Todos los campos principales (email, password, nombre, apellido, fecha) son requeridos."})
         return response, 400
 
     if Patient.query.filter_by(email=email).first():
@@ -249,7 +326,7 @@ def register_patient():
     response = jsonify(new_patient.serialize())
 
     # Solucion temporal CORS
-    #response.headers.add("Access-Control-Allow-Origin", "*")
+    # response.headers.add("Access-Control-Allow-Origin", "*")
 
     return response, 201
 
@@ -262,9 +339,9 @@ def create_token_patient():
 
     user = Patient.query.filter_by(email=username).first()
 
-    if not user or not bcrypt.checkpw(password.encode("utf-8"),user.password.encode("utf-8")):
+    if not user or not bcrypt.checkpw(password.encode("utf-8"), user.password.encode("utf-8")):
         return jsonify({"msg": "Bad username or password"}), 401
-     
+
     access_token = create_access_token(identity=str(user.id))
     return jsonify({"token": access_token, "user_id": user.id})
 
@@ -313,12 +390,14 @@ def set_inactive(patient_id):
     serialized_patient = patient_set_inactive.serialize()
     return serialized_patient
 
+
 @api.route("/protected/patient", methods=["GET"])
 @jwt_required()
 def protected_patient():
     current_user_id = int(get_jwt_identity())
     patient = Patient.query.get(current_user_id)
-    return jsonify (patient.serialize()), 200
+    return jsonify(patient.serialize()), 200
+
 
 @api.route('PatientDashboard/<int:patient_id>', methods=['GET'])
 def dashboard_patient(patient_id):
@@ -330,27 +409,49 @@ def dashboard_patient(patient_id):
 #                           ROUTES OF APPOINTMENTS                          #
 #############################################################################
 
+
 @api.route('/appointment', methods=['POST'])
 def create_appointment():
     data = request.get_json()
     doctor_id = data.get("doctor_id")
-    patient_id = data.get("patient_id")
+    patient_id = data.get("patient_id")  # <-- Añadido
     center_id = data.get("center_id")
     appointment_date = data.get("appointment_date")
 
-    # Validamos que doctor y appointment no esten vacios
-    if not doctor_id or not appointment_date:
-        return jsonify({"msg": "doctor_id y appointment_date son requeridos para pedir cita"}), 400
-    # Pasamos el String del JSON a formato Date
-    appointment_dt = datetime.strptime(appointment_date, "%d-%m-%Y %H:%M")
+    # Validamos que los campos requeridos no esten vacios
+    if not doctor_id or not patient_id or not appointment_date or not center_id:
+        return jsonify({
+            "msg": "doctor_id, patient_id, center_id y appointment_date son requeridos para pedir cita"
+        }), 400
 
-    new_appointment = Appointment.create(
-        doctor_id=doctor_id,
-        patient_id=patient_id,
-        center_id=center_id,
-        appointment_date=appointment_dt,
-    )
-    return jsonify(new_appointment.serialize()), 201
+    try:
+        # Pasamos el String del JSON a formato Date
+        # Formato esperado: DD-MM-YYYY HH:MM (ej: 06-11-2025 18:30)
+        appointment_dt = datetime.strptime(appointment_date, "%d-%m-%Y %H:%M")
+    except ValueError:
+        return jsonify({
+            "msg": "Formato de fecha inválido. Se espera DD-MM-YYYY HH:MM"
+        }), 400
+
+    # Opcional: Verificar que el doctor, paciente y centro existan antes de crear la cita
+    if not Doctor.query.get(doctor_id):
+        return jsonify({"msg": "Doctor no encontrado"}), 404
+    if not Patient.query.get(patient_id):
+        return jsonify({"msg": "Paciente no encontrado"}), 404
+    if not Center.query.get(center_id):
+        return jsonify({"msg": "Centro no encontrado"}), 404
+
+    try:
+        new_appointment = Appointment.create(
+            doctor_id=doctor_id,
+            patient_id=patient_id,
+            center_id=center_id,
+            appointment_date=appointment_dt,
+        )
+        return jsonify(new_appointment.serialize()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": f"Error interno al crear la cita: {str(e)}"}), 500
 
 
 @api.route('/appointment/<int:appointment_id>', methods=['PUT'])
