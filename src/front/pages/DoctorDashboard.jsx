@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { logout, fetchHealthCenters, updateDoctorCenter, getDoctorAppointments } from '../services/fetch';
 import '../css/DoctorDashboard.css';
 
+
 // =================================================================
 // 1. FUNCIONES DE MANEJO DE FECHAS
 // =================================================================
@@ -214,8 +215,10 @@ const DailyAppointments = ({ appointments, onStatusChange }) => {
     const getStatusClass = (status) => {
         switch (status) {
             case 'En consulta': return 'status-in-progress';
-            case 'Finalizada': return 'status-completed';
+            case 'Finalizada': return 'status-completed'; // Verde
             case 'Pendiente': return 'status-pending';
+            case 'Ausente': return 'status-absent'; // Amarillo
+            case 'Cancelada': return 'status-cancelled'; // Rojo
             default: return '';
         }
     };
@@ -236,30 +239,25 @@ const DailyAppointments = ({ appointments, onStatusChange }) => {
                             </div>
                             <div className="appointment-actions">
 
-                                <span className={`appointment-status ${getStatusClass(app.status)}`}>
-                                    {app.status}
-                                </span>
+                                <select
+                                    className={`appointment-status-select ${getStatusClass(app.status)}`}
+                                    value={app.status}
+                                    onChange={(e) => onStatusChange(app.id, e.target.value)}
+                                    // Deshabilitamos el select si la cita ya está finalizada, ausente o cancelada
+                                    disabled={app.status === 'Finalizada' || app.status === 'Ausente' || app.status === 'Cancelada'}
+                                >
+                                    <option value="Pendiente">Pendiente</option>
+                                    <option value="En consulta">En consulta</option>
+                                    <option value="Finalizada">Finalizada</option>
+                                    <option value="Ausente">Ausente</option>
+                                    {/* Si el estado es cancelado, lo mostramos pero no es una opción seleccionable */}
+                                    {app.status === 'Cancelada' && (
+                                        <option value="Cancelada" disabled>Cancelada</option>
+                                    )}
+                                </select>
 
-                                {app.status === 'Pendiente' && (
-                                    <button
-                                        className="action-button secondary"
-                                        onClick={() => onStatusChange(app.id, 'En consulta')}
-                                        title="Marcar cita como En consulta"
-                                    >
-                                        ▶️ Iniciar
-                                    </button>
-                                )}
-
-                                {app.status === 'En consulta' && (
-                                    <button
-                                        className="action-button tertiary"
-                                        onClick={() => onStatusChange(app.id, 'Finalizada')}
-                                        title="Marcar cita como Finalizada"
-                                    >
-                                        ✅ Finalizar
-                                    </button>
-                                )}
                             </div>
+                            
                         </div>
                     ))}
                 </div>
@@ -391,6 +389,20 @@ const DoctorDashboard = () => {
     // --------------------------------------------------
 
     useEffect(() => {
+        // 1. Verificamos el ROL
+        const role = localStorage.getItem("user_role");
+
+        // Comprobamos que el rol sea 'doctor'
+        if (role !== "doctor") {
+            console.error("Acceso denegado. Se esperaba rol 'doctor' pero se encontró:", role);
+            // Si el rol no es 'doctor', borramos y redirigimos a login
+            localStorage.removeItem("current_user"); 
+            localStorage.removeItem("jwt_token");
+            localStorage.removeItem("user_role");
+            localStorage.removeItem("doctorHealthCenter"); // Limpiar el centro específico de doctor
+            navigate('/login'); // Usamos navigate que ya está importado
+            return; // Detenemos la ejecución del useEffect
+        }
         const userDataString = localStorage.getItem("current_user");
         if (userDataString) {
             try {

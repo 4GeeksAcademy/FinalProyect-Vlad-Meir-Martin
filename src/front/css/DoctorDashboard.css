@@ -358,3 +358,51 @@ body {
 .placeholder-content-doctor h3 {
     color: #495057;
 }
+
+.action-button.absent {
+    background-color: #fff;
+    color: #ffc107; 
+    border: 1px solid #ffc107;
+}
+.action-button.absent:hover {
+    background-color: #ffc107;
+    color: #000;
+}
+
+/* Estilos para los recuadros de estado (llamativos) */
+.appointment-status {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 0.9em;
+    text-align: center;
+    min-width: 100px; /* Ancho mínimo para consistencia */
+}
+.appointment-status.status-pending {
+    background-color: #e7f3ff; /* Azul claro */
+    color: #0056b3;
+    border: 1px solid #b3d7ff;
+}
+.appointment-status.status-in-progress {
+    background-color: #e0f7fa; /* Cyan claro */
+    color: #006064;
+    border: 1px solid #b2ebf2;
+}
+.appointment-status.status-completed {
+    /* "Finished" (Finalizada) - Verde, como pediste */
+    background-color: #e8f5e9; /* Verde claro */
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+.appointment-status.status-absent {
+    /* "Absent" (Ausente) - Amarillo, como pediste */
+    background-color: #fffde7; /* Amarillo claro */
+    color: #f57f17;
+    border: 1px solid #fff59d;
+}
+.appointment-status.status-cancelled {
+    /* "Cancelled" (Cancelada) - Rojo, como pediste */
+    background-color: #ffebee; /* Rojo claro */
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}

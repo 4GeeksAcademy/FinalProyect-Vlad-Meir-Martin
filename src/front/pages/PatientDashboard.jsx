@@ -614,6 +614,22 @@ const PatientDashboard = () => {
     const [historyStack, setHistoryStack] = useState(['welcome']);
 
     useEffect(() => {
+        // 1. Verificamos el ROL primero
+        const role = localStorage.getItem("user_role");
+        // Comprobamos 'patient' (de tu login) y 'paciente' (del fetch.js anterior)
+        if (role !== "patient" && role !== "paciente") {
+            console.error("Acceso denegado. Se esperaba rol 'patient' pero se encontró:", role);
+            // Si el rol no es 'patient', borramos todo y redirigimos a login
+            localStorage.removeItem("current_user"); 
+            localStorage.removeItem("jwt_token");
+            localStorage.removeItem("user_role");
+            localStorage.removeItem("selectedHealthCenter"); // Limpiar todo
+            localStorage.removeItem("selectedDoctor");
+            navigate('/login');
+            return; // Detenemos la ejecución del useEffect
+        }
+        // --- FIN DE LA CORRECCIÓN DE SEGURIDAD ---
+
         let userDataString = localStorage.getItem("current_user");
         if (!userDataString) {
             // Datos simulados si no hay usuario en localStorage
@@ -624,7 +640,12 @@ const PatientDashboard = () => {
         }
         if (userDataString) {
             try {
-                const data = JSON.parse(userDataString);
+                // Usamos tu función segura
+                const data = safeJsonParse("current_user");
+                if (!data) {
+                    throw new Error("Datos de usuario corruptos o nulos.");
+                }
+
                 const name = data.user?.first_name || data.first_name || 'Usuario';
                 const lastName = data.user?.last_name || data.last_name || 'Invitado';
                 const fullPatientName = `${name} ${lastName}`;
@@ -633,8 +654,16 @@ const PatientDashboard = () => {
                     hospital: data.hospitalName || 'Hospital General',
                     id: data.user?.id || data.id || null
                 });
+
+                if (!data.user?.id && !data.id) {
+                     console.warn("ID de paciente no encontrado en localStorage, las citas no funcionarán.");
+                }
+
             } catch (error) {
                 console.error("Error al parsear datos del paciente:", error);
+                // Si falla el parseo, limpiar y desloguear
+                handleLogout(); 
+                return;
             }
         }
 
@@ -669,7 +698,7 @@ const PatientDashboard = () => {
         };
 
         loadApiData();
-    }, []);
+    }, []); // Nota: 'navigate' no es necesario como dependencia si solo se usa en el cleanup o condicionalmente.
 
     useEffect(() => {
         if (selectedHealthCenter) {
@@ -687,6 +716,8 @@ const PatientDashboard = () => {
 
     const handleLogout = () => {
         localStorage.removeItem("current_user");
+        localStorage.removeItem("jwt_token");
+        localStorage.removeItem("user_role");
         localStorage.removeItem("selectedHealthCenter");
         localStorage.removeItem("selectedDoctor");
         navigate('/login');
@@ -1160,3 +1191,4 @@ const PatientDashboard = () => {
 };
 
 export default PatientDashboard;
+

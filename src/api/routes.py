@@ -246,8 +246,6 @@ def get_doctor_appointments():
             "time": time_key,
             # Nombre completo del paciente
             "patient": f"{patient.first_name} {patient.last_name}",
-            # Puedes añadir un campo 'reason' al modelo Appointment si lo necesitas
-            "reason": "Consulta médica",
             "status": serialized_app["status"],
             "center_id": serialized_app["center_id"],
             "doctor_id": serialized_app["doctor_id"],
@@ -414,7 +412,7 @@ def dashboard_patient(patient_id):
 def create_appointment():
     data = request.get_json()
     doctor_id = data.get("doctor_id")
-    patient_id = data.get("patient_id")  # <-- Añadido
+    patient_id = data.get("patient_id") 
     center_id = data.get("center_id")
     appointment_date = data.get("appointment_date")
 
