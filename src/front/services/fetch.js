@@ -1,27 +1,21 @@
-// Archivo de funciones para interactuar con la API del proyecto 4Geeks
-// Incluye todas las funciones de login/registro y las de appointments movidas desde PatientDashboard.jsx
 
-// =================================================================
-//                  🌐 CONFIGURACIÓN DE LA API
-// =================================================================
-
+//CONFIGURACIÓN DE LA API
 // URL de la API externa para la carga inicial de centros (Seeding)
 export const URL_BASE_API =
   "https://v1itkby3i6.ufs.sh/f/0Z3x5lFQsHoMA5dMpr0oIsXfxg9jVSmyL65q4rtKROwEDU3G";
 
 // URL del propio backend 
 export const OWN_API =
-  "https://organic-disco-j6jqgq64jv3pjjr-3001.app.github.dev/";
+  "https://ideal-space-carnival-r4w9wj5r99463rr7-3001.app.github.dev/";
 
-// =================================================================
-//                  🔐 HELPER PARA AUTENTICACIÓN
-// =================================================================
 
+//HELPER PARA AUTENTICACIÓN
 /**
  * Obtiene el token JWT del localStorage
- * @throws {Error} Si no hay token disponible
- * @returns {string} Token JWT
+ * @throws {Error}
+ * @returns {string}
  */
+
 const getAuthToken = () => {
   const token = localStorage.getItem("jwt_token");
   if (!token) {
@@ -30,10 +24,8 @@ const getAuthToken = () => {
   return token;
 };
 
-// =================================================================
-//                    👤 REGISTRO Y LOGIN
-// =================================================================
 
+//REGISTRO Y LOGIN
 // --- Registro ---
 
 async function registerPatient(userData) {
@@ -92,9 +84,8 @@ async function registerDoctor(userData) {
   }
 }
 
-/**
- * Función principal de registro que delega según el rol.
- */
+/*Función principal de registro que delega según el rol.*/
+
 export async function register(userData) {
   const role = userData.role;
 
@@ -143,9 +134,7 @@ async function loginUser(email, password, role) {
   }
 }
 
-/**
- * Función principal de login que delega según el rol.
- */
+/*Función principal de login que delega según el rol.*/
 export async function login(email, password, role) {
   const normalizedRole = role ? role.toLowerCase() : undefined;
 
@@ -160,9 +149,7 @@ export async function login(email, password, role) {
   }
 }
 
-/**
- * Obtener perfil (ruta protegida)
- */
+/*Obtener perfil (ruta protegida)*/
 export async function getProfile() {
   const token = localStorage.getItem("jwt_token");
   const role = localStorage.getItem("user_role");
@@ -200,9 +187,7 @@ export async function getProfile() {
   }
 }
 
-/**
- * Función de logout
- */
+/*Función de logout*/
 export const logout = () => {
   localStorage.removeItem("jwt_token");
   localStorage.removeItem("user_role");
@@ -212,15 +197,12 @@ export const logout = () => {
   );
 };
 
-// =================================================================
-//                🏥 CENTROS DE SALUD Y DOCTORES
-// =================================================================
 
-/**
- * Obtiene la lista de centros de salud desde la API
- * @returns {Promise<Array>} Array de objetos con información de centros
- * @throws {Error} Si hay error de conexión o respuesta
- */
+//CENTROS DE SALUD Y DOCTORES
+
+
+
+
 export const fetchHealthCenters = async () => {
   try {
     const response = await fetch(`${OWN_API}api/centers`);
@@ -241,11 +223,7 @@ export const fetchHealthCenters = async () => {
   }
 };
 
-/**
- * Obtiene la lista de doctores desde la API
- * @returns {Promise<Array>} Array de objetos con información de doctores
- * @throws {Error} Si hay error de conexión o respuesta
- */
+
 export const fetchDoctors = async () => {
   try {
     const response = await fetch(`${OWN_API}api/doctors`);
@@ -268,17 +246,13 @@ export const fetchDoctors = async () => {
 // Carga inicial de centros de Navarra (Seeding)
 
 export async function fetchAndRegisterNavarraCenters() {
-  try {
-    /**
-     * Utilizamos (OWN_API) para obtener los datos de la API externa,
-     * ya que no nos permite hacer un fetch directamente a los datos oficiales.
-     */ 
+  try { 
     const response = await fetch(`${OWN_API}api/centers/seed/navarra`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ external_api_url: URL_BASE_API }), // Enviamos la URL externa si el backend la necesita
+      body: JSON.stringify({ external_api_url: URL_BASE_API }),
     });
 
     const data = await response.json();
@@ -345,14 +319,7 @@ export const createAppointment = async (appointmentData) => {
   }
 };
 
-/**
- * Actualiza/Reagenda una cita existente (PUT)
- * @param {number} appointment_id - ID de la cita a modificar
- * @param {Object} updateData - Datos a actualizar
- * @param {string} updateData.appointment_date - Nueva fecha en formato "DD-M-YYYY H:M"
- * @param {number} updateData.doctor_id - ID del doctor
- * @returns {Promise<Object>} Objeto con success (boolean) y data o message
- */
+
 export const updateAppointment = async (appointment_id, updateData) => {
   try {
     const token = getAuthToken();
@@ -385,11 +352,7 @@ export const updateAppointment = async (appointment_id, updateData) => {
 };
 
 
-/**
- * Cancela una cita existente (PUT)
- * @param {number} appointmentId - ID de la cita a cancelar
- * @returns {Promise<Object>} Objeto con success (boolean) y data o message
- */
+
 export const cancelAppointment = async (appointmentId) => {
   try {
     const token = getAuthToken();
@@ -422,16 +385,24 @@ export const cancelAppointment = async (appointmentId) => {
   }
 };
 
-// =================================================================
-//              👨‍⚕️ FUNCIONES ESPECÍFICAS DEL DOCTOR
-// =================================================================
+export const updateAppointmentStatus = async (appointmentId, newStatus) => {
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${OWN_API}api/appointment/${appointmentId}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ status: newStatus }),
+        });
+        return { success: response.ok, data: await response.json() };
+    } catch (error) {
+        return { success: false, message: "Error de conexión." };
+    }
+};
 
-/**
- * Actualiza el centro de trabajo del doctor en la API (PUT)
- * Endpoint asumido: /api/doctor/center
- * @param {number} centerId - ID del centro seleccionado
- * @returns {Promise<Object>} Objeto con success (boolean) y data o message
- */
+//FUNCIONES ESPECÍFICAS DEL DOCTOR
 
 export const getDoctorAppointments = async () => {
     const token = getAuthToken();
@@ -460,7 +431,7 @@ export const getDoctorAppointments = async () => {
 
 export const updateDoctorCenter = async (centerId) => {
   try {
-    const token = getAuthToken(); // Asume que getAuthToken está definido
+    const token = getAuthToken();
 
     const response = await fetch(`${OWN_API}api/doctor/center`, {
       method: "PUT",

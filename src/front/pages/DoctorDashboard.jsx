@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Importamos fetchHealthCenters y updateDoctorCenter para cargar y guardar el centro
 // En la línea de imports (cerca de la línea 4)
-import { logout, fetchHealthCenters, updateDoctorCenter, getDoctorAppointments } from '../services/fetch';
+import { logout, fetchHealthCenters, updateDoctorCenter, getDoctorAppointments, cancelAppointment, updateAppointmentStatus } from '../services/fetch';
 import '../css/DoctorDashboard.css';
 
 
@@ -123,7 +123,8 @@ const MonthlyCalendar = ({ currentMonthDate, setCurrentMonthDate, selectedDay, s
         const appointmentDays = new Set();
         const monthKey = (month + 1).toString().padStart(2, '0') + '/' + year;
         appointmentsData.forEach(app => {
-            if (app.dateKey.endsWith(monthKey)) {
+            // Usamos app.dateKey que viene de la API
+            if (app.dateKey && app.dateKey.endsWith(monthKey)) {
                 appointmentDays.add(parseInt(app.dateKey.substring(0, 2)));
             }
         });
@@ -231,7 +232,7 @@ const DailyAppointments = ({ appointments, onStatusChange }) => {
             ) : (
                 <div className="appointment-list">
                     {appointments.map((app) => (
-                        <div key={app.id} className="appointment-item">
+                        <div key={app.apiId || app.id} className="appointment-item">
                             <div className="appointment-info">
                                 <span className="appointment-time">{app.time}</span>
                                 <strong className="appointment-patient">{app.patient}</strong>
@@ -242,7 +243,7 @@ const DailyAppointments = ({ appointments, onStatusChange }) => {
                                 <select
                                     className={`appointment-status-select ${getStatusClass(app.status)}`}
                                     value={app.status}
-                                    onChange={(e) => onStatusChange(app.id, e.target.value)}
+                                    onChange={(e) => onStatusChange(app.apiId || app.id, e.target.value)}
                                     // Deshabilitamos el select si la cita ya está finalizada, ausente o cancelada
                                     disabled={app.status === 'Finalizada' || app.status === 'Ausente' || app.status === 'Cancelada'}
                                 >
@@ -250,14 +251,9 @@ const DailyAppointments = ({ appointments, onStatusChange }) => {
                                     <option value="En consulta">En consulta</option>
                                     <option value="Finalizada">Finalizada</option>
                                     <option value="Ausente">Ausente</option>
-                                    {/* Si el estado es cancelado, lo mostramos pero no es una opción seleccionable */}
-                                    {app.status === 'Cancelada' && (
-                                        <option value="Cancelada" disabled>Cancelada</option>
-                                    )}
+                                    <option value="Cancelada">Cancelada</option>
                                 </select>
-
                             </div>
-                            
                         </div>
                     ))}
                 </div>
@@ -268,161 +264,132 @@ const DailyAppointments = ({ appointments, onStatusChange }) => {
 
 
 // =================================================================
-// 7. doctorMenuData (Datos de navegación)
+// 7. DATOS DE PRUEBA Y MENU
 // =================================================================
 
 const doctorMenuData = [
     {
-        title: '1. Agenda y citas',
+        title: 'Gestión de Citas',
         icon: '📅',
         links: [
-            { name: 'Calendario personal y de consultas', path: '/medico/agenda' },
-            { name: 'Listado de pacientes citados', path: '/medico/citas-hoy' },
-            { name: 'Reprogramar o cancelar citas', path: '/medico/modificar-cita' },
-            { name: 'Disponibilidad automática', path: '/medico/bloquear-horas' },
-            { name: 'Integración con Google Calendar', path: '/medico/integracion-agenda' },
+            { name: 'Ver Agenda Completa', path: '/doctor/agenda' },
+            { name: 'Crear Cita Manual', path: '/doctor/cita/nueva' },
         ],
     },
     {
-        title: '2. Información de pacientes',
-        icon: '📄',
+        title: 'Pacientes',
+        icon: '🧑‍🤝‍🧑',
         links: [
-            { name: 'Notas médicas y evolución', path: '/medico/notas' },
-            { name: 'Resultados de laboratorio o pruebas', path: '/medico/resultados' },
-            { name: 'Adjuntar documentos o imágenes', path: '/medico/adjuntar-docs' },
-            { name: 'Ver prescripciones anteriores', path: '/medico/prescripciones-previas' },
+            { name: 'Buscar Paciente', path: '/doctor/pacientes/buscar' },
+            { name: 'Historiales Clínicos', path: '/doctor/historiales' },
         ],
     },
     {
-        title: '3. Gestión de prescripciones',
-        icon: '✍️',
-        links: [
-            { name: 'Emitir o renovar recetas electrónicas', path: '/medico/emitir-receta' },
-            { name: 'Registrar tratamientos', path: '/medico/registrar-tratamiento' },
-            { name: 'Consultar alergias o contraindicaciones', path: '/medico/alergias' },
-        ],
-    },
-    {
-        title: '4. Comunicación',
-        icon: '💬',
-        links: [
-            { name: 'Mensajería interna con pacientes y colegas', path: '/medico/mensajeria' },
-            { name: 'Consultas interdepartamentales', path: '/medico/consultas-inter' },
-        ],
-    },
-    {
-        title: '5. Reportes y estadísticas',
-        icon: '📈',
-        links: [
-            { name: 'Pacientes atendidos por día / mes', path: '/medico/reporte-atendidos' },
-            { name: 'Tasa de ausencias (no-shows)', path: '/medico/tasa-ausencias' },
-            { name: 'Carga de trabajo semanal o mensual', path: '/medico/carga-trabajo' },
-            { name: 'Informes clínicos personalizados', path: '/medico/informes-personalizados' },
-        ],
-    },
-    {
-        title: '6. Administración y perfil',
+        title: 'Configuración',
         icon: '⚙️',
         links: [
-            { name: 'Gestión de horarios y disponibilidad', path: '/medico/gestion-horarios' },
-            { name: 'Actualización de datos profesionales', path: '/medico/perfil' },
-            { name: 'Preferencias de notificación o agenda', path: '/medico/config-notif' },
-        ],
-    },
-    {
-        title: '7. Telemedicina (Opcional)',
-        icon: '💻',
-        links: [
-            { name: 'Videoconsultas integradas', path: '/medico/videoconsultas' },
-            { name: 'Chat en vivo con el paciente', path: '/medico/chat-vivo' },
-            { name: 'Notas y diagnósticos postconsulta', path: '/medico/diagnosticos-tele' },
+            { name: 'Mi Perfil', path: '/doctor/perfil' },
+            { name: 'Horario de Trabajo', path: '/doctor/horario' },
         ],
     },
 ];
 
+
 // =================================================================
-// 8. COMPONENTE PRINCIPAL: DoctorDashboard 
+// 8. COMPONENTE PRINCIPAL: DoctorDashboard
 // =================================================================
 
 const DoctorDashboard = () => {
     const navigate = useNavigate();
-    const [doctorData, setDoctorData] = useState(null);
-    const [appointments, setAppointments] = useState([]); // Antes era initialAppointments
-    const [currentMonthDate, setCurrentMonthDate] = useState(new Date(2025, 9, 1));
-    const [selectedDay, setSelectedDay] = useState(new Date(2025, 9, 20));
 
-    // --- NUEVOS ESTADOS PARA CENTROS ---
-    const [loadingCenters, setLoadingCenters] = useState(true);
+    // 1. ESTADOS
+    const [currentMonthDate, setCurrentMonthDate] = useState(new Date());
+    const [selectedDay, setSelectedDay] = useState(null);
+    const [appointments, setAppointments] = useState([]); // Array de citas
+    const [doctorData, setDoctorData] = useState(null); // Datos del doctor
+    const [allCenters, setAllCenters] = useState([]); // Lista de centros
+    const [selectedHealthCenter, setSelectedHealthCenter] = useState(
+        JSON.parse(localStorage.getItem('doctorHealthCenter'))
+    );
+    const [loadingCenters, setLoadingCenters] = useState(false);
     const [apiError, setApiError] = useState(null);
-    const [allCenters, setAllCenters] = useState([]);
 
-    // CORRECCIÓN: Inicialización del estado del centro para evitar que persista entre usuarios
-    const [selectedHealthCenter, setSelectedHealthCenter] = useState(() => {
-        // 1. Intentamos cargar el centro desde el current_user (que viene del backend)
-        const userDataString = localStorage.getItem("current_user");
-        if (userDataString) {
-            try {
-                const userData = JSON.parse(userDataString);
-                // Asumimos que el backend devuelve center_id y center_name en el objeto de usuario
-                if (userData.center_id && userData.center_name) {
-                    return { id: userData.center_id, name: userData.center_name, address: userData.center_address || 'Dirección no disponible' };
-                }
-            } catch (e) {
-                console.error("Error al parsear current_user:", e);
-            }
-        }
-        // 2. Si no está en current_user, intentamos el fallback de la sesión anterior (doctorHealthCenter)
-        return JSON.parse(localStorage.getItem('doctorHealthCenter'));
-    });
-    // -----------------------------------
 
-    // --- LÓGICA PARA GUARDAR EL CENTRO SELECCIONADO ---
-    // Mantenemos el useEffect para guardar en localStorage solo como fallback temporal
-    // La fuente principal de verdad debe ser el current_user (backend)
-    useEffect(() => {
-        if (selectedHealthCenter) {
-            localStorage.setItem('doctorHealthCenter', JSON.stringify(selectedHealthCenter));
+    // 2. MANEJO DE CENTRO
+    const handleSelectCenter = async (center) => {
+        // 1. Llamamos a la API para persistir el cambio
+        const result = await updateDoctorCenter(center.id);
+
+        if (result.success) {
+            // 2. Actualizamos el estado local solo si la API tuvo éxito
+            setSelectedHealthCenter(center);
+            localStorage.setItem('doctorHealthCenter', JSON.stringify(center));
         } else {
-            localStorage.removeItem('doctorHealthCenter');
+            alert(`Error al guardar el centro en la API: ${result.message}`);
         }
-    }, [selectedHealthCenter]);
-    // --------------------------------------------------
+    };
 
+
+    // 3. MANEJO DE LOGOUT 
+    const handleLogout = () => {
+        logout();
+        localStorage.removeItem('doctorHealthCenter'); // Limpiamos el centro al cerrar sesión
+        navigate('/Login', { replace: true }); // Redirige al Login
+    };
+
+
+    // 4. LÓGICA DE CITAS (Corregida para llamar a la API solo en Cancelada)
+    const handleStatusChange = async (appointmentId, newStatus) => {
+    
+    // 1. Lógica de Persistencia (Solo para Finalizada)
+    if (newStatus === 'Finalizada') {
+        const result = await updateAppointmentStatus(appointmentId, 'completed'); // 'completed' es el valor que tu backend espera
+        
+        if (!result.success) {
+            alert(`Error al finalizar la cita: ${result.message}`);
+            return; // No actualizar el estado local si la API falla
+        }
+    }
+        
+        // 2. Actualización del Estado Local (Para todos los estados, incluyendo Cancelada si la API fue exitosa)
+        setAppointments(prevAppointments => {
+            return prevAppointments.map(app =>
+                app.id === appointmentId
+                    ? { ...app, status: newStatus }
+                    : app
+            );
+        });
+        
+        // Forzar re-renderizado del calendario para actualizar el punto
+        if (selectedDay) { setSelectedDay(new Date(selectedDay.getTime())); }
+    };
+
+    const filteredAppointments = useMemo(() => {
+        if (!selectedDay) return [];
+        const selectedDateKey = selectedDay.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        // NOTA: Aquí deberías filtrar por el center_id del doctor si las citas vinieran de la API
+        return appointments.filter(app => app.dateKey === selectedDateKey);
+    }, [selectedDay, appointments]);
+
+
+    // 5. EFECTOS DE CARGA
     useEffect(() => {
-        // 1. Verificamos el ROL
-        const role = localStorage.getItem("user_role");
-
-        // Comprobamos que el rol sea 'doctor'
-        if (role !== "doctor") {
-            console.error("Acceso denegado. Se esperaba rol 'doctor' pero se encontró:", role);
-            // Si el rol no es 'doctor', borramos y redirigimos a login
-            localStorage.removeItem("current_user"); 
-            localStorage.removeItem("jwt_token");
-            localStorage.removeItem("user_role");
-            localStorage.removeItem("doctorHealthCenter"); // Limpiar el centro específico de doctor
-            navigate('/login'); // Usamos navigate que ya está importado
-            return; // Detenemos la ejecución del useEffect
+        // Cargar datos del doctor
+        const user = JSON.parse(localStorage.getItem('current_user'));
+        if (!user) {
+            navigate('/Login', { replace: true });
+            return;
         }
-        const userDataString = localStorage.getItem("current_user");
-        if (userDataString) {
-            try {
-                const data = JSON.parse(userDataString);
-                setDoctorData({
-                    title: data.title || 'Dr.',
-                    name: data.first_name,
-                    lastName: data.last_name,
-                    specialty: data.specialty || 'Especialidad',
-                    // Aquí podrías añadir el center_id si viniera del login
-                });
-            } catch (error) {
-                console.error("Error al parsear los datos del usuario:", error);
-            }
-        } else {
-            console.log("No hay datos de sesión, redirigiendo a Login.");
-            navigate('/Login');
-        }
+        setDoctorData({
+            id: user.id,
+            title: 'Dr.',
+            name: user.first_name,
+            lastName: user.last_name,
+            specialty: user.specialty,
+            centerId: user.center_id
+        });
 
-        // --- LÓGICA DE CARGA DE CENTROS ---
+        // Cargar centros de salud
         const loadCenters = async () => {
             setLoadingCenters(true);
             setApiError(null);
@@ -439,66 +406,23 @@ const DoctorDashboard = () => {
 
         loadCenters();
 
-        //loadAppointments
+        // Cargar citas (Aún usa datos de prueba o un fetch incompleto)
         const loadAppointments = async () => {
             try {
                 const apps = await getDoctorAppointments();
+                // Asumimos que getDoctorAppointments devuelve un array de objetos con el formato correcto
                 setAppointments(apps);
             } catch (err) {
                 console.error("Error al cargar citas del doctor:", err);
             }
         };
-
+        
         loadAppointments();
 
     }, [navigate]);
 
 
-
-    // --- FUNCIÓN PARA MANEJAR LA SELECCIÓN DEL CENTRO ---
-    const handleSelectCenter = async (center) => {
-        // 1. Llamamos a la API para persistir el cambio
-        const result = await updateDoctorCenter(center.id);
-
-        if (result.success) {
-            // 2. Actualizamos el estado local solo si la API tuvo éxito
-            setSelectedHealthCenter(center);
-            // Opcional: Actualizar current_user en localStorage para que el centro persista en el login
-            // Esto requiere que el backend devuelva el objeto de usuario actualizado o que lo hagamos manualmente.
-            // Por simplicidad, confiaremos en que el próximo getProfile lo actualizará.
-        } else {
-            alert(`Error al guardar el centro en la API: ${result.message}`);
-        }
-    };
-    // ---------------------------------------------------
-
-    // 3. MANEJO DE LOGOUT 
-    const handleLogout = () => {
-        logout();
-        localStorage.removeItem('doctorHealthCenter'); // Limpiamos el centro al cerrar sesión
-        navigate('/Login', { replace: true }); // Redirige al Login
-    };
-
-    // 4. LÓGICA DE CITAS (Mantenida)
-    const handleStatusChange = (appointmentId, newStatus) => {
-        setAppointments(prevAppointments => {
-            return prevAppointments.map(app =>
-                app.id === appointmentId
-                    ? { ...app, status: newStatus }
-                    : app
-            );
-        });
-        if (selectedDay) { setSelectedDay(new Date(selectedDay.getTime())); }
-    };
-
-    const filteredAppointments = useMemo(() => {
-        if (!selectedDay) return [];
-        const selectedDateKey = selectedDay.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
-        // NOTA: Aquí deberías filtrar por el center_id del doctor si las citas vinieran de la API
-        return appointments.filter(app => app.dateKey === selectedDateKey);
-    }, [selectedDay, appointments]);
-
-    // Muestra un mensaje de carga 
+    // 6. RENDERIZADO
     if (!doctorData) {
         return <div className="loading-screen">Cargando perfil del doctor...</div>;
     }

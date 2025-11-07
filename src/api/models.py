@@ -54,7 +54,6 @@ class Patient(db.Model):
     def all_patients():
         return Patient.query.all()
     
-    #Funcion para crear un paciente
     @classmethod
     def create(cls, email, first_name, last_name, password, birth_date, assign_doctor):
         new_patient = cls(
@@ -70,7 +69,6 @@ class Patient(db.Model):
         db.session.commit()
         return new_patient
     
-# Funcion para modificar ciertos parametros de la clase
     def update(self, email=None, password=None, assign_doctor=None):
         if email is not None:
             self.email = email
@@ -84,7 +82,6 @@ class Patient(db.Model):
         db.session.commit()
         return self.serialize()
     
-    #Funcion para dejar inactivo a un paciente
     def soft_delete(self):
         self.is_active=False
         db.session.commit()

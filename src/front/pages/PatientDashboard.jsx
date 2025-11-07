@@ -9,7 +9,7 @@ import {
     cancelAppointment
 } from '../services/fetch.js';
 
-export const OWN_API = "https://improved-space-invention-r4w9wj5r9q5pfxwqv-3001.app.github.dev/";
+export const OWN_API = "https://ideal-space-carnival-r4w9wj5r99463rr7-3001.app.github.dev/";
 
 // =================================================================
 // 🛡️ FUNCIÓN DE PARSEO SEGURO PARA LOCALSTORAGE
