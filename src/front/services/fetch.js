@@ -2,19 +2,19 @@
 // Incluye todas las funciones de login/registro y las de appointments movidas desde PatientDashboard.jsx
 
 // =================================================================
-// 🌐 CONFIGURACIÓN DE LA API
+//                  🌐 CONFIGURACIÓN DE LA API
 // =================================================================
 
 // URL de la API externa para la carga inicial de centros (Seeding)
 export const URL_BASE_API =
   "https://v1itkby3i6.ufs.sh/f/0Z3x5lFQsHoMA5dMpr0oIsXfxg9jVSmyL65q4rtKROwEDU3G";
 
-// URL de tu propio backend (4Geeks/Flask)
+// URL del propio backend 
 export const OWN_API =
-  "https://improved-space-invention-r4w9wj5r9q5pfxwqv-3001.app.github.dev/";
+  "https://organic-disco-j6jqgq64jv3pjjr-3001.app.github.dev/";
 
 // =================================================================
-// 🔐 HELPER PARA AUTENTICACIÓN
+//                  🔐 HELPER PARA AUTENTICACIÓN
 // =================================================================
 
 /**
@@ -31,7 +31,7 @@ const getAuthToken = () => {
 };
 
 // =================================================================
-// 👤 REGISTRO Y LOGIN
+//                    👤 REGISTRO Y LOGIN
 // =================================================================
 
 // --- Registro ---
@@ -190,7 +190,6 @@ export async function getProfile() {
 
       localStorage.removeItem("jwt_token");
       localStorage.removeItem("user_role");
-      // navigate('/login'); // Esto debe manejarse en el componente
       return;
     }
 
@@ -214,7 +213,7 @@ export const logout = () => {
 };
 
 // =================================================================
-// 🏥 CENTROS DE SALUD Y DOCTORES (Movidas desde PatientDashboard.jsx)
+//                🏥 CENTROS DE SALUD Y DOCTORES
 // =================================================================
 
 /**
@@ -266,13 +265,14 @@ export const fetchDoctors = async () => {
   }
 };
 
-/**
- * Carga inicial de centros de Navarra (Seeding)
- * NOTA: Esta función llama a tu backend, el cual se encarga de usar URL_BASE_API internamente.
- */
+// Carga inicial de centros de Navarra (Seeding)
+
 export async function fetchAndRegisterNavarraCenters() {
   try {
-    // Tu backend (OWN_API) es el que se encarga de usar URL_BASE_API para obtener los datos.
+    /**
+     * Utilizamos (OWN_API) para obtener los datos de la API externa,
+     * ya que no nos permite hacer un fetch directamente a los datos oficiales.
+     */ 
     const response = await fetch(`${OWN_API}api/centers/seed/navarra`, {
       method: "POST",
       headers: {
@@ -299,7 +299,7 @@ export async function fetchAndRegisterNavarraCenters() {
 }
 
 // =================================================================
-// 📅 APPOINTMENTS (Movidas desde PatientDashboard.jsx)
+//                        📅 APPOINTMENTS 
 // =================================================================
 
 /**
@@ -347,17 +347,17 @@ export const createAppointment = async (appointmentData) => {
 
 /**
  * Actualiza/Reagenda una cita existente (PUT)
- * @param {number} appointmentId - ID de la cita a modificar
+ * @param {number} appointment_id - ID de la cita a modificar
  * @param {Object} updateData - Datos a actualizar
  * @param {string} updateData.appointment_date - Nueva fecha en formato "DD-M-YYYY H:M"
  * @param {number} updateData.doctor_id - ID del doctor
  * @returns {Promise<Object>} Objeto con success (boolean) y data o message
  */
-export const updateAppointment = async (appointmentId, updateData) => {
+export const updateAppointment = async (appointment_id, updateData) => {
   try {
     const token = getAuthToken();
 
-    const response = await fetch(`${OWN_API}api/appointment/${appointmentId}`, {
+    const response = await fetch(`${OWN_API}api/appointment/${appointment_id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -383,6 +383,7 @@ export const updateAppointment = async (appointmentId, updateData) => {
     return { success: false, message: error.message || "error de conexion" };
   }
 };
+
 
 /**
  * Cancela una cita existente (PUT)
@@ -422,7 +423,7 @@ export const cancelAppointment = async (appointmentId) => {
 };
 
 // =================================================================
-// 👨‍⚕️ FUNCIONES ESPECÍFICAS DEL DOCTOR
+//              👨‍⚕️ FUNCIONES ESPECÍFICAS DEL DOCTOR
 // =================================================================
 
 /**
@@ -431,8 +432,6 @@ export const cancelAppointment = async (appointmentId) => {
  * @param {number} centerId - ID del centro seleccionado
  * @returns {Promise<Object>} Objeto con success (boolean) y data o message
  */
-
-// fetch.js (Añadir este código)
 
 export const getDoctorAppointments = async () => {
     const token = getAuthToken();
