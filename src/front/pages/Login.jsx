@@ -80,7 +80,8 @@ function Login() {
         navigate('/Register'); // Redirección real a la página de Registro
     };
     
-    // --- ESTILOS VISUALES PARA LOS BOTONES DE ROL ---
+    // --- ESTILOS VISUALES PARA LOS BOTONES DE ROL 
+    
     const getRoleButtonStyle = (role) => ({
         padding: '10px 20px',
         margin: '5px',

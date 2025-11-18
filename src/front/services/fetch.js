@@ -5,8 +5,7 @@ export const URL_BASE_API =
   "https://v1itkby3i6.ufs.sh/f/0Z3x5lFQsHoMA5dMpr0oIsXfxg9jVSmyL65q4rtKROwEDU3G";
 
 // URL del propio backend 
-export const OWN_API =
-  "https://ideal-space-carnival-r4w9wj5r99463rr7-3001.app.github.dev/";
+export const OWN_API = "https://verbose-space-spork-7vw9qp9w66w7c655-3001.app.github.dev/";
 
 
 //HELPER PARA AUTENTICACIÓN

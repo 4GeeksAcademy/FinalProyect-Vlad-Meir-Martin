@@ -28,7 +28,9 @@ def get_all_patient():
     patients = Patient.all_patients()
     return jsonify([patient.serialize() for patient in patients]), 200
 
-#ROUTES OF CENTER
+# ROUTES OF CENTER
+
+
 @api.route('/centers', methods=['GET'])
 def get_centers():
     centers = Center.query.all()
@@ -98,7 +100,7 @@ def create_center():
     return jsonify(new_center.serialize()), 201
 
 
-#ROUTES OF DOCTOR
+# ROUTES OF DOCTOR
 
 @api.route('/doctors', methods=['GET'])
 def get_all_doctors():
@@ -202,6 +204,7 @@ def protected_doctor():
     user = Doctor.query.get(current_user_id)
     return jsonify(user.serialize()), 200
 
+
 @api.route("/doctor/appointments", methods=["GET"])
 @jwt_required()
 def get_doctor_appointments():
@@ -240,26 +243,26 @@ def get_doctor_appointments():
 @api.route('/doctor/center', methods=['PUT'])
 @jwt_required()
 def update_doctor_center():
-    #Obtener la identidad del doctor desde el token JWT
+    # Obtener la identidad del doctor desde el token JWT
     current_user_id = int(get_jwt_identity())
     doctor = Doctor.query.get(current_user_id)
 
     if not doctor:
         return jsonify({"msg": "Doctor no encontrado o token inválido"}), 404
 
-    #Obtener el center_id del cuerpo de la solicitud
+    # Obtener el center_id del cuerpo de la solicitud
     data = request.get_json()
     if not data or 'center_id' not in data:
         return jsonify({"msg": "El campo 'center_id' es requerido"}), 400
 
     center_id = data.get('center_id')
 
-    #Verificar que el centro existe
+    # Verificar que el centro existe
     center = Center.query.get(center_id)
     if not center:
         return jsonify({"msg": "El centro especificado no existe"}), 404
 
-    #Actualizar el centro del doctor usando la función del modelo
+    # Actualizar el centro del doctor usando la función del modelo
     try:
         doctor.update(center_id=center_id)
         return jsonify(doctor.serialize()), 200
@@ -268,8 +271,7 @@ def update_doctor_center():
         return jsonify({"msg": f"Error al actualizar el centro: {str(e)}"}), 500
 
 
-#ROUTES OF PATIENT
-
+# ROUTES OF PATIENT
 
 
 @api.route('/register/patient', methods=['POST'])
@@ -381,15 +383,14 @@ def dashboard_patient(patient_id):
         return jsonify({"error": "Paciente no encontrado"}), 404
 
 
-#ROUTES OF APPOINTMENTS
-
+# ROUTES OF APPOINTMENTS
 
 
 @api.route('/appointment', methods=['POST'])
 def create_appointment():
     data = request.get_json()
     doctor_id = data.get("doctor_id")
-    patient_id = data.get("patient_id") 
+    patient_id = data.get("patient_id")
     center_id = data.get("center_id")
     appointment_date = data.get("appointment_date")
 
@@ -436,10 +437,10 @@ def update_appointment(appointment_id):
     if not update_appointment:
         return jsonify({"error": "Cita no encontrada"}), 404
     data = request.get_json()
-    
+
     updates_to_make = {}
 
-    #Manejo de appointment_date (Solo si está presente)
+    # Manejo de appointment_date (Solo si está presente)
     appointment_date = data.get('appointment_date')
     if appointment_date:
         try:
@@ -448,13 +449,13 @@ def update_appointment(appointment_id):
         except ValueError:
             return jsonify({"msg": "Formato de fecha inválido. Se espera DD-MM-YYYY HH:MM"}), 400
 
-    #Manejo del campo status (¡Añadido!)
+    # Manejo del campo status (¡Añadido!)
     if 'status' in data:
         updates_to_make['status'] = data.get('status')
 
-    #Actualizamos la cita
+    # Actualizamos la cita
     if updates_to_make:
         update_appointment.update(**updates_to_make)
         return jsonify(update_appointment.serialize()), 200
-    
+
     return jsonify({"msg": "No se proporcionaron campos para actualizar"}), 400
