@@ -9,6 +9,14 @@ import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
 import { Single } from "./pages/Single";
 import { Demo } from "./pages/Demo";
+//--------------------
+//Nuestras paginas
+//--------------------
+import Login from "./pages/Login";
+import PatientDashboard from "./pages/PatientDashboard"
+import Register from "./pages/Register"
+import DoctorDashboard from "./pages/DoctorDashboard"
+
 
 export const router = createBrowserRouter(
     createRoutesFromElements(
@@ -24,6 +32,11 @@ export const router = createBrowserRouter(
         {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
         <Route path= "/" element={<Home />} />
         <Route path="/single/:theId" element={ <Single />} />  {/* Dynamic route for single items */}
+        <Route path="/Login" element={ <Login/> } />
+        <Route path="/Register" element={<Register/>} />
+        <Route path="/DoctorDashboard/:id" element={<DoctorDashboard onLogout={() => handleLogout(navigate)} />} />
+        <Route path="/PatientDashboard/:patient_id" element={ <PatientDashboard /> }/>
+        <Route path="/DoctorDashboard/:doctor_id" element={ <DoctorDashboard /> }/>
         <Route path="/demo" element={<Demo />} />
       </Route>
     )

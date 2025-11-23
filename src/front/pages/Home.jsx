@@ -1,52 +1,54 @@
-import React, { useEffect } from "react"
+import Login from "./Login.jsx";
+import Register from "./Register.jsx";
+import CitasForm from "../components/CitasForm.jsx";
+import HeroSection from "../components/HeroSection.jsx";
+import PatientDashboard from "./PatientDashboard.jsx";
+import DoctorDashboard from "./DoctorDashboard.jsx";
+import { fetchAndRegisterNavarraCenters } from "../services/fetch.js";
 import rigoImageUrl from "../assets/img/rigo-baby.jpg";
 import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
+import React, { useEffect } from 'react';
 
 export const Home = () => {
 
 	const { store, dispatch } = useGlobalReducer()
 
-	const loadMessage = async () => {
-		try {
-			const backendUrl = import.meta.env.VITE_BACKEND_URL
-
-			if (!backendUrl) throw new Error("VITE_BACKEND_URL is not defined in .env file")
-
-			const response = await fetch(backendUrl + "/api/hello")
-			const data = await response.json()
-
-			if (response.ok) dispatch({ type: "set_hello", payload: data.message })
-
-			return data
-
-		} catch (error) {
-			if (error.message) throw new Error(
-				`Could not fetch the message from the backend.
-				Please check if the backend is running and the backend port is public.`
-			);
-		}
-
-	}
-
 	useEffect(() => {
-		loadMessage()
-	}, [])
+        
+        // Comprobamos si ya hemos cargado los centros antes
+        const hasLoadedCenters = localStorage.getItem('centersLoaded');
+        // Si NO los hemos cargado, ejecutamos la función
+        if (!hasLoadedCenters) {
+            // Definimos una función async interna para poder usar 'await'
+            const loadInitialData = async () => {
+                console.log("Cargando y registrando centros por primera vez...");
+                try {
+                    const result = await fetchAndRegisterNavarraCenters();
+                    
+                    if (result.success) {
+                        console.log("Centros registrados:", result.message || result.data);
+                        // Ponemos la "bandera" en localStorage para no volver a hacerlo
+                        localStorage.setItem('centersLoaded', 'true');
+                    } else {
+                        console.error("Error al registrar centros:", result.message);
+                    }
+                } catch (error) {
+                    console.error("Error fatal al cargar datos:", error.message);
+                }
+            };
 
+            loadInitialData();
+        } else {
+            console.log("Los centros ya estaban cargados. No se hace nada.");
+        }
+
+    }, []);
 	return (
 		<div className="text-center mt-5">
-			<h1 className="display-4">Hello Rigo!!</h1>
-			<p className="lead">
-				<img src={rigoImageUrl} className="img-fluid rounded-circle mb-3" alt="Rigo Baby" />
-			</p>
-			<div className="alert alert-info">
-				{store.message ? (
-					<span>{store.message}</span>
-				) : (
-					<span className="text-danger">
-						Loading message from the backend (make sure your python 🐍 backend is running)...
-					</span>
-				)}
-			</div>
+            
+			<Login />
+			<HeroSection />
+
 		</div>
 	);
 }; 

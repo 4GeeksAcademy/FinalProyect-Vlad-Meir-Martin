@@ -1,0 +1,408 @@
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+}
+
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.content {
+    flex-grow: 1;
+    padding: 25px 30px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    margin: 15px;
+}
+
+.content h1 {
+    color: #007bff;
+    margin-top: 0;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+.sidebar {
+    width: 280px;
+    background-color: #f8f9fa; 
+    color: #333; 
+    padding: 20px 0;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.main-title-doctor {
+    text-align: center;
+    padding: 10px 20px 25px;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #007bff; 
+    border-bottom: 1px solid #dee2e6;
+    margin: 0 0 15px 0;
+}
+
+.accordion-item {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-weight: 500;
+    color: #333;
+}
+
+.accordion-header:hover {
+    background-color: #e9ecef; 
+}
+
+.accordion-header .icon {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+    background-color: #f1f3f5; 
+}
+
+.accordion-content.active {
+    max-height: 500px; 
+}
+
+.secondary-link {
+    display: block;
+    padding: 10px 20px 10px 50px;
+    color: #495057;
+    text-decoration: none;
+    font-size: 0.9em;
+}
+
+.secondary-link:hover {
+    background-color: #dee2e6;
+    color: #333;
+}
+
+.arrow {
+    transition: transform 0.3s;
+    font-size: 1.2em;
+}
+
+.arrow.rotated {
+    transform: rotate(90deg);
+}
+
+.calendar-card {
+    background-color: #fcfcfc;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 0 auto 25px auto; 
+    max-width: 600px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.calendar-header h2 {
+    font-size: 1.5em;
+    margin: 0;
+    text-transform: capitalize;
+}
+
+.calendar-nav-btn {
+    background: #e9ecef;
+    border: none;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 1.2em;
+    color: #495057;
+    transition: background-color 0.2s;
+}
+
+.calendar-nav-btn:hover {
+    background-color: #dee2e6;
+}
+
+.calendar-grid-labels {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 5px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+}
+
+.calendar-day {
+    padding: 10px 5px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s, border 0.2s;
+    font-size: 0.9em;
+    position: relative;
+    height: 35px;
+    line-height: 15px;
+}
+
+.calendar-day.empty-day {
+    cursor: default;
+    background-color: #fcfcfc;
+}
+
+.calendar-day:not(.empty-day):hover {
+    background-color: #e9f5ff;
+}
+
+.day-today {
+    border: 2px solid #007bff;
+    font-weight: bold;
+}
+
+.day-selected {
+    background-color: #007bff; 
+    color: white; 
+    font-weight: bold;
+}
+
+.day-has-appointments {
+    color: #1a75ff; 
+    font-weight: 700; 
+}
+
+.day-has-appointments.day-selected {
+    color: white; 
+}
+
+
+.day-weekend {
+    color: #dc3545; 
+    cursor: not-allowed;
+    background-color: #f7f7f7;
+}
+
+.daily-appointments-card {
+    background-color: #fcfcfc;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.appointment-header {
+    color: #007bff;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.no-appointments {
+    color: #6c757d;
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+    background-color: #f7f7f7;
+    border-radius: 4px;
+}
+
+.appointment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.appointment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background-color: white;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s;
+    border-left: 5px solid transparent; 
+}
+
+.appointment-item:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.appointment-info {
+    flex-grow: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 15px;
+}
+
+.appointment-time {
+    font-weight: bold;
+    color: #007bff;
+    font-size: 1.1em;
+}
+
+.appointment-reason {
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.appointment-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.action-button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.action-button.secondary {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.action-button.secondary:hover {
+    background-color: #138496;
+}
+
+.action-button.tertiary {
+    background-color: #28a745;
+    color: white;
+}
+
+.action-button.tertiary:hover {
+    background-color: #1e7e34;
+}
+
+.appointment-status {
+    padding: 5px 10px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    min-width: 80px;
+    text-align: center;
+}
+
+.appointment-status.status-pending {
+    background-color: #e6f7ff;
+    color: #1890ff;
+}
+.appointment-item:has(.status-pending) {
+    border-left-color: #1890ff;
+}
+
+.appointment-status.status-in-progress {
+    background-color: #fffbe6;
+    color: #faad14;
+}
+.appointment-item:has(.status-in-progress) {
+    border-left-color: #faad14;
+}
+
+.appointment-status.status-completed {
+    background-color: #f6ffed;
+    color: #52c41a;
+}
+.appointment-item:has(.status-completed) {
+    border-left-color: #52c41a;
+}
+
+.appointment-status.status-missed {
+    background-color: #dc3545; 
+    color: white;
+}
+
+.daily-appointments-card .appointment-item:has(.status-missed) {
+    border-left-color: #dc3545;
+    background-color: #f8d7da; 
+}
+
+.placeholder-content-doctor {
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    background-color: #fcfcfc;
+}
+
+.placeholder-content-doctor h3 {
+    color: #495057;
+}
+
+.action-button.absent {
+    background-color: #fff;
+    color: #ffc107; 
+    border: 1px solid #ffc107;
+}
+.action-button.absent:hover {
+    background-color: #ffc107;
+    color: #000;
+}
+
+/* Estilos para los recuadros de estado (llamativos) */
+.appointment-status {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 0.9em;
+    text-align: center;
+    min-width: 100px; /* Ancho mínimo para consistencia */
+}
+.appointment-status.status-pending {
+    background-color: #e7f3ff; /* Azul claro */
+    color: #0056b3;
+    border: 1px solid #b3d7ff;
+}
+.appointment-status.status-in-progress {
+    background-color: #e0f7fa; /* Cyan claro */
+    color: #006064;
+    border: 1px solid #b2ebf2;
+}
+.appointment-status.status-completed {
+    /* "Finished" (Finalizada) - Verde, como pediste */
+    background-color: #e8f5e9; /* Verde claro */
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+.appointment-status.status-absent {
+    /* "Absent" (Ausente) - Amarillo, como pediste */
+    background-color: #fffde7; /* Amarillo claro */
+    color: #f57f17;
+    border: 1px solid #fff59d;
+}
+.appointment-status.status-cancelled {
+    /* "Cancelled" (Cancelada) - Rojo, como pediste */
+    background-color: #ffebee; /* Rojo claro */
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+}
